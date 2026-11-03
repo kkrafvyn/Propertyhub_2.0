@@ -11,6 +11,7 @@ import { getChargeOutstandingMinor, summarizeEstateLedger, type EstateChargeRow 
 import { exportEstateReceivables } from "../../../lib/estate-accounting-export.service";
 import { collectionsQueueService, type CollectionQueueItem } from "../../../lib/collections-queue.service";
 import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
+import { escapeHtml } from "../../../lib/html-escape";
 
 interface EstateFinanceProps { organizationId: string; currentUserId: string; }
 
@@ -117,8 +118,18 @@ export function EstateFinance({ organizationId, currentUserId }: EstateFinancePr
     const outstanding = unitCharges.reduce((total, charge) => total + Math.max(0, getChargeOutstandingMinor(charge)), 0);
     const popup = window.open("", "_blank", "noopener,noreferrer,width=840,height=760");
     if (!popup) { toast.error("Allow pop-ups to open the unit statement."); return; }
-    const rows = unitCharges.map((charge) => `<tr><td>${charge.due_date}</td><td>${charge.description || charge.type || "Charge"}</td><td>${money(Number(charge.amount_minor), charge.currency || selectedEstate?.currency)}</td><td>${money(getChargeOutstandingMinor(charge), charge.currency || selectedEstate?.currency)}</td></tr>`).join("");
-    popup.document.write(`<html><head><title>${unitName(unitId)} statement</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#172033}table{border-collapse:collapse;width:100%;margin-top:24px}th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}.total{font-size:22px;font-weight:bold;margin-top:24px}</style></head><body><h1>BaytMiftah Unit Statement</h1><p>${selectedEstate?.name || "Estate"} · ${unitName(unitId)} · Generated ${new Date().toLocaleDateString()}</p><table><thead><tr><th>Due date</th><th>Description</th><th>Charge</th><th>Outstanding</th></tr></thead><tbody>${rows || "<tr><td colspan='4'>No ledger entries.</td></tr>"}</tbody></table><p class="total">Balance due: ${money(outstanding, selectedEstate?.currency)}</p></body></html>`);
+    const estateLabel = escapeHtml(selectedEstate?.name || "Estate");
+    const unitLabel = escapeHtml(unitName(unitId));
+    const generatedOn = escapeHtml(new Date().toLocaleDateString());
+    const rows = unitCharges
+      .map(
+        (charge) =>
+          `<tr><td>${escapeHtml(charge.due_date)}</td><td>${escapeHtml(charge.description || charge.type || "Charge")}</td><td>${escapeHtml(money(Number(charge.amount_minor), charge.currency || selectedEstate?.currency))}</td><td>${escapeHtml(money(getChargeOutstandingMinor(charge), charge.currency || selectedEstate?.currency))}</td></tr>`,
+      )
+      .join("");
+    popup.document.write(
+      `<html><head><title>${unitLabel} statement</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#172033}table{border-collapse:collapse;width:100%;margin-top:24px}th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}.total{font-size:22px;font-weight:bold;margin-top:24px}</style></head><body><h1>BaytMiftah Unit Statement</h1><p>${estateLabel} · ${unitLabel} · Generated ${generatedOn}</p><table><thead><tr><th>Due date</th><th>Description</th><th>Charge</th><th>Outstanding</th></tr></thead><tbody>${rows || "<tr><td colspan='4'>No ledger entries.</td></tr>"}</tbody></table><p class="total">Balance due: ${escapeHtml(money(outstanding, selectedEstate?.currency))}</p></body></html>`,
+    );
     popup.document.close(); popup.focus(); popup.print();
   };
 

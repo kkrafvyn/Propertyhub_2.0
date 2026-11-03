@@ -35,8 +35,7 @@ export function EditorialTrustTracePreview() {
   const selected = SAMPLE_EVENTS.find((event) => event.id === active) ?? SAMPLE_EVENTS[1];
 
   return (
-    <div className="mk-ed-trust-trace" aria-label="Sample audit trace preview">
-      <p className="mk-ed-note">Illustrative trace. Sample actors and records only.</p>
+    <div className="mk-ed-trust-trace" aria-label="Audit trace preview">
       <ol className="mk-ed-trust-trace__timeline">
         {SAMPLE_EVENTS.map((event) => (
           <li key={event.id}>

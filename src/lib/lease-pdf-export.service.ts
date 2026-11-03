@@ -1,12 +1,5 @@
 import type { GeneratedLeaseSchedule } from "./lease-clause-generator.service";
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
+import { escapeHtml } from "./html-escape";
 
 function markdownToHtml(markdown: string): string {
   const lines = markdown.split("\n");

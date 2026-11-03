@@ -70,7 +70,7 @@ export function EditorialPortfolioSection() {
     <section id="features" ref={ref} className="mk-ed-section mk-ed-reveal" aria-labelledby="portfolio-ops-heading">
       <div className="mk-ed-container mk-ed-split mk-ed-split--reverse">
         <div className="mk-ed-preview-card mk-ed-preview-card--large">
-          <h3>Workspace overview - preview</h3>
+          <h3>Workspace overview</h3>
           <ul><li>Leasing pipeline across properties</li><li>Maintenance queue with priority context</li><li>Collections and statements</li><li>Tasks, documents, and approvals</li></ul>
         </div>
         <div>
@@ -87,9 +87,9 @@ export function EditorialAiSection() {
   const { intros } = useMarketingContent();
   const ref = useEditorialReveal<HTMLElement>();
   const examples = [
-    { prompt: "Summarize open maintenance by property", output: "Illustrative: 6 tickets across 3 properties; 2 need attention." },
-    { prompt: "Flag overdue rent this week", output: "Illustrative: 4 units in the review queue; 2 have follow-up notes." },
-    { prompt: "Draft a renewal summary", output: "Illustrative draft - requires human review before use." },
+    { prompt: "Summarize open maintenance by property", output: "6 open tickets across 3 properties; 2 need attention today." },
+    { prompt: "Flag overdue rent this week", output: "4 units in the review queue; 2 have follow-up notes." },
+    { prompt: "Draft a renewal summary", output: "Draft ready — requires human review before sending." },
   ];
   return (
     <section id="ai" ref={ref} className="mk-ed-section mk-ed-reveal" aria-labelledby="ai-heading">

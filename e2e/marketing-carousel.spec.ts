@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 
 async function open(page: import('@playwright/test').Page) {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Your property life.Your property business.', { timeout: 30000 });
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Your property life. Your property business.', { timeout: 30000 });
 }
 
 const activeHeroSrc = (page: import('@playwright/test').Page) =>
@@ -105,7 +105,7 @@ test('published marketing content replaces defaults while preserving the product
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ document: content }]) }),
   );
   await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Your portfolio.Clearer every day.');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Your portfolio. Clearer every day.');
   await expect(page.locator('.mk-ed-hero__lead')).toHaveText('Published portfolio copy.');
   await expect(page).toHaveTitle(/Portfolio clarity/);
   await expect.poll(() => page.locator('.mk-photo-hero img').count()).toBe(4);

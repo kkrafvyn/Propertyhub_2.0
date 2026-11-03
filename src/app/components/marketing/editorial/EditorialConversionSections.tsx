@@ -65,7 +65,7 @@ export function EditorialAppPreviewSection() {
       <div className="mk-ed-container">
         <p className="mk-ed-kicker">In-app experience</p>
         <h2 id="app-previews-heading" className="mk-ed-heading">See the product in motion</h2>
-        <p className="mk-ed-lead">Recorded from the live apps with demo data — no device frames or staged marketing overlays.</p>
+        <p className="mk-ed-lead">Screen recordings from the consumer and workspace apps using demo portfolio data.</p>
         <div className="mk-ed-app-preview-grid">
           {appPreviews.showConsumer ? (
             <figure className="mk-ed-app-preview">

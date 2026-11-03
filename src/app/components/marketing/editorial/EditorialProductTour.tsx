@@ -128,7 +128,7 @@ export function EditorialProductTour() {
 
               {step === "payments" ? (
                 <>
-                  <h3 className="mk-ed-panel-title">Collections · illustrative</h3>
+                  <h3 className="mk-ed-panel-title">Collections</h3>
                   <ul className="mk-ed-bullets">
                     <li>{SAMPLE_PAYMENTS.rentDue}</li>
                     <li>{SAMPLE_PAYMENTS.lastReceipt}</li>

@@ -64,7 +64,7 @@ export const DEFAULT_MARKETING_INTROS: MarketingIntros = {
   productTour: {
     kicker: 'Interactive preview',
     title: 'Walk through a sample portfolio',
-    lead: 'Explore illustrative workspace records based on real modules. Nothing here connects to production data or processes live payments.',
+    lead: 'Explore portfolio, property, collections, and maintenance flows built from real modules. Demo data only — not connected to production or live payments.',
   },
   workflow: {
     kicker: 'One operating system',
@@ -79,7 +79,7 @@ export const DEFAULT_MARKETING_INTROS: MarketingIntros = {
   ai: {
     kicker: 'AI with context',
     title: 'Assistance grounded in your operation',
-    lead: 'Workspace AI uses limited tools, action logs, and human approval. Examples below are samples — not live account data.',
+    lead: 'Workspace AI uses limited tools, action logs, and human approval. Examples below use demo data — not live account data.',
   },
   trust: {
     kicker: 'Trust and safeguards',
@@ -92,7 +92,7 @@ export const DEFAULT_MARKETING_INTROS: MarketingIntros = {
     lead: 'Plan fit depends on portfolio size, enabled modules, and rollout support. Fees and regional availability are confirmed during onboarding.',
   },
   faqTitle: 'Practical questions',
-  proofNote: 'Real Estate Operating System for Ghana-first operations — with international rules where enabled. Previews use illustrative data.',
+  proofNote: 'One Real Estate Operating System for Ghana-first operations — with international rules where your workspace enables them.',
 };
 
 export const DEFAULT_MARKETING_DOCUMENT: MarketingPageDocument = {
@@ -120,7 +120,7 @@ export const DEFAULT_MARKETING_DOCUMENT: MarketingPageDocument = {
     {
       title: 'Mobile apps in store review',
       body:
-        'BaytMiftah consumer and workspace apps are rolling out on Google Play closed testing and Apple App Store review. Join the tester program via Contact while public store links go live.',
+        'BaytMiftah consumer and workspace apps are rolling out on Google Play closed testing and Apple App Store review. Contact us to join the tester program while public store links go live.',
     },
     {
       title: 'Ghana-first, globally ready',

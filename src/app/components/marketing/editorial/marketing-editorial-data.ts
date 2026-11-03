@@ -1,7 +1,7 @@
 /** Illustrative sample data for marketing demonstrations only. */
 
 export const SAMPLE_PORTFOLIO = {
-  name: "Sample portfolio - preview",
+  name: "Sample Accra portfolio",
   properties: [
     { id: "p1", name: "Airport Hills - Block B", units: 24, occupancy: "22 occupied" },
     { id: "p2", name: "East Legon - Terrace Row", units: 12, occupancy: "11 occupied" },
@@ -15,12 +15,12 @@ export const SAMPLE_PROPERTY = {
   unit: "Unit 204",
   listingStatus: "Published",
   leaseStatus: "Active lease",
-  tenant: "Sample record (illustrative)",
+  tenant: "Sample tenant record",
 };
 
 export const SAMPLE_PAYMENTS = {
-  rentDue: "GHS 4,200 - due in 5 days",
-  lastReceipt: "Receipt #4821 - matched",
+  rentDue: "GHS 4,200 — due in 5 days",
+  lastReceipt: "Receipt #4821 — matched",
   openCases: "1 promise-to-pay tracked",
 };
 
@@ -68,10 +68,10 @@ export const MARKETING_FAQ = [
   },
   {
     q: "Are the mobile apps available?",
-    a: "Native apps are rolling out via Google Play closed testing and Apple App Store review. Use Contact to request tester access until public store links are published on this page.",
+    a: "Native apps are rolling out via Google Play closed testing and Apple App Store review. Contact us to request tester access until public store links appear on this page.",
   },
   {
     q: "How does AI work?",
-    a: "Workspace AI uses limited tools, action logs, and human approval. Marketing examples are illustrative samples — not live account data or autonomous decisions.",
+    a: "Workspace AI uses limited tools, action logs, and human approval. Examples on this site use demo data — not live account data or autonomous decisions.",
   },
 ];

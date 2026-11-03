@@ -1,3 +1,5 @@
+import { escapeHtml } from "./html-escape";
+
 export function downloadTextFile(filename: string, content: string, mimeType = "text/plain") {
   if (typeof window === "undefined") return;
 
@@ -114,11 +116,11 @@ export const financeReportService = {
         </head>
         <body>
           <h1>Finance Report</h1>
-          <p>Generated ${new Date().toLocaleString()}</p>
+          <p>Generated ${escapeHtml(new Date().toLocaleString())}</p>
           <div class="grid">
-            <div class="card"><strong>Total Collected</strong><div>${summary.formatted.totalCollected}</div></div>
-            <div class="card"><strong>Total Refunded</strong><div>${summary.formatted.totalRefunded}</div></div>
-            <div class="card"><strong>Net Collected</strong><div>${summary.formatted.netCollected}</div></div>
+            <div class="card"><strong>Total Collected</strong><div>${escapeHtml(summary.formatted.totalCollected)}</div></div>
+            <div class="card"><strong>Total Refunded</strong><div>${escapeHtml(summary.formatted.totalRefunded)}</div></div>
+            <div class="card"><strong>Net Collected</strong><div>${escapeHtml(summary.formatted.netCollected)}</div></div>
           </div>
           <h2>Transactions</h2>
           <table>
@@ -136,11 +138,11 @@ export const financeReportService = {
                 .map(
                   (payment) => `
                     <tr>
-                      <td>${payment.provider_reference || ""}</td>
-                      <td>${payment.payer?.full_name || payment.payer?.email || ""}</td>
-                      <td>${payment.purpose || ""}</td>
-                      <td>${payment.status || ""}</td>
-                      <td>${formatMoney(Number(payment.amount_minor || 0), payment.currency || "GHS")}</td>
+                      <td>${escapeHtml(payment.provider_reference || "")}</td>
+                      <td>${escapeHtml(payment.payer?.full_name || payment.payer?.email || "")}</td>
+                      <td>${escapeHtml(payment.purpose || "")}</td>
+                      <td>${escapeHtml(payment.status || "")}</td>
+                      <td>${escapeHtml(formatMoney(Number(payment.amount_minor || 0), payment.currency || "GHS"))}</td>
                     </tr>
                   `
                 )

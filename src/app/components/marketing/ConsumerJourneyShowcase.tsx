@@ -259,11 +259,6 @@ export function ConsumerJourneyShowcase() {
         <p className="mk-eyebrow">{extras.consumers.kicker}</p>
         <h2 id="consumers-heading" className="mk-section-title">{extras.consumers.title}</h2>
         <p className="mk-section-copy mk-showcase-intro">{extras.consumers.lead}</p>
-        <p className="text-xs text-ink-muted mt-2 max-w-prose">
-          Illustrative preview — screens are simplified for marketing. Live product flows (search, offers,
-          and your property journey timeline) may differ in layout and copy.
-        </p>
-
         <div className="mk-journey-nav" role="tablist" aria-label="Consumer journey">
           {STEPS.map((step) => {
             const Icon = step.icon;
@@ -301,7 +296,7 @@ export function ConsumerJourneyShowcase() {
               <i />
             </span>
             <span className="mk-showcase-frame-title">BaytMiftah · Consumer</span>
-            <span className="mk-showcase-frame-tag">Preview</span>
+            <span className="mk-showcase-frame-tag">Demo</span>
           </div>
           <div key={activeStep} className="mk-showcase-frame-body mk-showcase-crossfade">
             <JourneyVisual stepId={activeStep} />
