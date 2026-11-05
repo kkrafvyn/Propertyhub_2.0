@@ -15,7 +15,7 @@ import { CallProvider } from "../context/CallContext";
 import { PHONE_MEDIA, TABLET_MEDIA } from "../lib/viewports";
 import { isBusinessMobileApp } from "../../lib/mobile-app";
 import { isElectron } from "../../lib/surface-detection";
-import { isDesktopWorkspaceApp } from "../../lib/desktop-app";
+import { isDesktopWorkspaceApp, isDesktopWorkspaceBuild } from "../../lib/desktop-app";
 import {
   isDesktopConsumerOnlyRoute,
   resolveDesktopProfessionalHome,
@@ -127,7 +127,14 @@ export function Root() {
   const showAdminDesktopShell = isElectron() && location.pathname.startsWith("/admin");
   const isDesktopApp = isDesktopWorkspaceApp();
 
-  if (isDesktopApp && isDesktopConsumerOnlyRoute(location.pathname)) {
+  // Packaged desktop only — do not treat Electron-UA browsers (e.g. IDE webviews)
+  // as the workspace app when the host is the public marketing site.
+  if (
+    isDesktopApp &&
+    isDesktopWorkspaceBuild() &&
+    isDesktopConsumerOnlyRoute(location.pathname) &&
+    !(isMarketingSite() && isMarketingPublicPath(location.pathname))
+  ) {
     const target = user ? resolveDesktopProfessionalHome(user, profile) : "/login";
     const current = `${location.pathname}${location.search}`;
     if (target !== current) {

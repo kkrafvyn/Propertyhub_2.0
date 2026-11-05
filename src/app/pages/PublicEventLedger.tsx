@@ -191,7 +191,13 @@ export function PublicEventLedger() {
           </NativeSelectControl>
           <Input
             className="h-12 flex-1 rounded-xl border-surface-border bg-surface-subtle text-sm px-4"
-            placeholder={kind === "transaction" ? "e.g. TXN-892348" : kind === "unit" ? "e.g. BM-UNIT-001" : "e.g. PROP-ACC-102"}
+            placeholder={
+              kind === "transaction"
+                ? "Payment reference"
+                : kind === "unit"
+                  ? "Unit code (BM-UNIT-…)"
+                  : "Listing or property ID"
+            }
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
           />

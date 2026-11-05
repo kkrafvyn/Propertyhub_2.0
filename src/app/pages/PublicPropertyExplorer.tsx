@@ -58,7 +58,7 @@ export function PublicPropertyExplorer() {
   }, [listing?.property]);
 
   const buyerPublicId = useMemo(() => {
-    if (!listing?.organization_id) return "BUY-000000";
+    if (!listing?.organization_id) return null;
     return `BUY-${String(listing.organization_id).slice(0, 8).toUpperCase()}`;
   }, [listing?.organization_id]);
 
@@ -150,26 +150,33 @@ export function PublicPropertyExplorer() {
                   Property: {propertyName}
                 </h2>
 
-                <div className="mt-2.5 flex items-center gap-2 text-sm text-ink-secondary">
-                  <MapPin className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>
-                    {property.address || "5 Independence Avenue"}, {property.city || "Accra, Greater Accra"}
-                  </span>
-                </div>
+                {(property.address || property.city || property.region) && (
+                  <div className="mt-2.5 flex items-center gap-2 text-sm text-ink-secondary">
+                    <MapPin className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span>
+                      {[property.address, property.city, property.region].filter(Boolean).join(", ")}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              <p className="max-w-xl text-sm leading-relaxed text-ink-secondary">
-                {property.description ||
-                  "Architecturally refined apartment featuring smart access controls, verified utility submetering, and escrow-protected lease agreements under Act 220 compliance."}
-              </p>
+              {property.description ? (
+                <p className="max-w-xl text-sm leading-relaxed text-ink-secondary">{property.description}</p>
+              ) : null}
 
-              {/* Stat tiles */}
+              {/* Stat tiles — only real values; never invent bedrooms/baths/size */}
               <div className="grid gap-3 sm:grid-cols-3 pt-2">
                 {[
-                  { icon: BedDouble, label: "Bedrooms", value: property.bedrooms ?? 3 },
-                  { icon: Bath, label: "Bathrooms", value: property.bathrooms ?? 2 },
-                  { icon: Ruler, label: "Size", value: `${property.square_meters ?? 120} m²` },
-                ].map(({ icon: Icon, label, value }) => (
+                  { icon: BedDouble, label: "Bedrooms", value: property.bedrooms != null ? String(property.bedrooms) : null },
+                  { icon: Bath, label: "Bathrooms", value: property.bathrooms != null ? String(property.bathrooms) : null },
+                  {
+                    icon: Ruler,
+                    label: "Size",
+                    value: property.square_meters != null ? `${property.square_meters} m²` : null,
+                  },
+                ]
+                  .filter((item) => item.value != null)
+                  .map(({ icon: Icon, label, value }) => (
                   <div
                     key={label}
                     className="rounded-2xl border border-surface-border/80 bg-surface-subtle/60 p-4 transition-all hover:border-emerald-500/30 hover:shadow-sm"
@@ -187,14 +194,16 @@ export function PublicPropertyExplorer() {
             {/* Right — Trust & Access Panel */}
             <div className="flex flex-col justify-between p-7 md:p-9 border-t md:border-t-0 md:border-l border-surface-border/80 bg-surface-subtle/40 backdrop-blur-xs">
               <div className="space-y-6">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-ink-secondary mb-2">
-                    Buyer Public ID:
-                  </p>
-                  <div className="rounded-xl border border-surface-border/80 bg-surface px-4 py-3 font-mono text-sm font-semibold text-ink shadow-xs">
-                    {buyerPublicId}
+                {buyerPublicId ? (
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-ink-secondary mb-2">
+                      Seller public ID
+                    </p>
+                    <div className="rounded-xl border border-surface-border/80 bg-surface px-4 py-3 font-mono text-sm font-semibold text-ink shadow-xs">
+                      {buyerPublicId}
+                    </div>
                   </div>
-                </div>
+                ) : null}
 
                 <div className="space-y-2.5">
                   {[

@@ -19,6 +19,7 @@ const listing = {
   visibility: "public",
   price: 4200,
   currency: "GHS",
+  organization_id: "org-abcd1234",
   published_at: "2026-05-12T00:00:00.000Z",
   created_at: "2026-05-12T00:00:00.000Z",
   updated_at: "2026-05-12T00:00:00.000Z",
@@ -66,7 +67,7 @@ describe("PublicPropertyExplorer", () => {
 
     expect(screen.getByText(/Unit: BM-UNIT-/i)).toBeInTheDocument();
     expect(screen.getByText(/Property: 5 Independence Ave/i)).toBeInTheDocument();
-    expect(screen.getByText(/Buyer Public ID:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Seller public ID/i)).toBeInTheDocument();
     expect(screen.getByText(/Verified identity/i)).toBeInTheDocument();
   });
 });
