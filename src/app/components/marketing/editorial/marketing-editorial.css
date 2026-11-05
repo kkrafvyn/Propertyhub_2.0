@@ -305,33 +305,33 @@
   border-block: 1px solid var(--mk-ed-glass-border);
 }
 
-/* Section copy on the photo layer (including split layouts); glass panels keep dark ink. */
+/* Section copy on the photo layer; glass panels (.mk-ed-glass-panel) use dark ink. */
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-kicker,
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container.mk-ed-faq > .mk-ed-kicker,
-.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-split > div:not(.mk-ed-journey):not(.mk-ed-preview-card):not(.mk-ed-trust-trace) > .mk-ed-kicker {
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) .mk-ed-split__copy > .mk-ed-kicker {
   color: var(--mk-ed-dark-accent);
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
 }
 
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-heading,
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container.mk-ed-faq > .mk-ed-heading,
-.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-split > div:not(.mk-ed-journey):not(.mk-ed-preview-card):not(.mk-ed-trust-trace) > .mk-ed-heading {
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) .mk-ed-split__copy > .mk-ed-heading {
   color: var(--mk-ed-on-photo-ink);
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.55);
 }
 
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > :is(.mk-ed-lead, .mk-ed-note),
-.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-split > div:not(.mk-ed-journey):not(.mk-ed-preview-card):not(.mk-ed-trust-trace) > :is(.mk-ed-lead, .mk-ed-note) {
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) .mk-ed-split__copy > :is(.mk-ed-lead, .mk-ed-note) {
   color: var(--mk-ed-on-photo-muted);
   text-shadow: 0 1px 16px rgba(0, 0, 0, 0.5);
 }
 
-.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-split > div:not(.mk-ed-journey):not(.mk-ed-preview-card):not(.mk-ed-trust-trace) .mk-ed-bullets {
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) .mk-ed-split__copy .mk-ed-bullets {
   color: var(--mk-ed-on-photo-muted);
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
 }
 
-.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-split > div:not(.mk-ed-journey):not(.mk-ed-preview-card):not(.mk-ed-trust-trace) .mk-ed-link {
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) .mk-ed-split__copy .mk-ed-link {
   color: var(--mk-ed-dark-accent);
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
 }
@@ -342,6 +342,7 @@
   .marketing-page--editorial .mk-ed-page--carousel .mk-ed-ai-card,
   .marketing-page--editorial .mk-ed-page--carousel .mk-ed-plan-card,
   .marketing-page--editorial .mk-ed-page--carousel .mk-ed-trust-trace,
+  .marketing-page--editorial .mk-ed-page--carousel .mk-ed-glass-panel,
   .marketing-page--editorial .mk-ed-page--carousel .mk-ed-compare > div,
   .marketing-page--editorial .mk-ed-page--carousel .mk-ed-journey,
   .marketing-page--editorial .mk-ed-page--carousel .mk-ed-callout--accent,
@@ -356,6 +357,7 @@
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-ai-card,
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-plan-card,
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-trust-trace,
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-glass-panel,
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-compare > div,
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-journey,
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-callout--accent,
@@ -363,14 +365,33 @@
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-surfaces__card,
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-integration-list li,
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-steps li > div:last-child {
-  background: var(--mk-ed-glass-light);
+  background: var(--mk-ed-glass-light-solid);
   border: 1px solid var(--mk-ed-glass-light-border);
   color: var(--mk-ed-ink);
+  text-shadow: none;
   backdrop-filter: blur(calc(var(--mk-ed-glass-blur) + 6px)) saturate(150%);
   -webkit-backdrop-filter: blur(calc(var(--mk-ed-glass-blur) + 6px)) saturate(150%);
   box-shadow:
-    0 16px 44px rgba(13, 25, 19, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.35) inset;
+    0 16px 44px rgba(13, 25, 19, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.45) inset;
+}
+
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-glass-panel .mk-ed-kicker,
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-journey .mk-ed-kicker {
+  color: var(--mk-ed-terra);
+  text-shadow: none;
+}
+
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-glass-panel ul,
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-glass-panel li,
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-journey__detail {
+  color: var(--mk-ed-ink-secondary);
+  text-shadow: none;
+}
+
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-glass-panel .mk-ed-compare__title {
+  color: var(--mk-ed-terra);
+  text-shadow: none;
 }
 
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-steps li > div:last-child {
@@ -1034,6 +1055,17 @@
   padding: 1.25rem 1.5rem;
 }
 
+.mk-ed-glass-panel {
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+  border-radius: 14px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.mk-ed-workflow .mk-ed-compare {
+  margin-top: clamp(1.25rem, 3vw, 2rem);
+}
+
 .mk-ed-compare {
   display: grid;
   gap: 1rem;
@@ -1052,6 +1084,15 @@
   margin: 0;
   padding-left: 1.1rem;
   overflow-wrap: anywhere;
+  color: var(--mk-ed-ink-secondary);
+  line-height: 1.55;
+}
+
+.mk-ed-journey__detail {
+  margin: 0.75rem 0 0;
+  line-height: 1.55;
+  font-size: 0.9375rem;
+  color: var(--mk-ed-ink-secondary);
 }
 
 @media (min-width: 640px) {

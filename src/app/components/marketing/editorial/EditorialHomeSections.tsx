@@ -37,26 +37,28 @@ export function EditorialWorkflowSection() {
 
   return (
     <section id="workflow" ref={ref} className="mk-ed-section mk-ed-section--muted mk-ed-reveal" aria-labelledby="workflow-heading">
-      <div className="mk-ed-container mk-ed-split">
-        <div>
-          <p className="mk-ed-kicker">{intros.workflow.kicker}</p>
-          <h2 id="workflow-heading" className="mk-ed-heading">{intros.workflow.title}</h2>
-          <p className="mk-ed-lead">{intros.workflow.lead}</p>
-          <div className="mk-ed-compare">
-            <div><h3 className="mk-ed-compare__title">{extras.workflowCompare.before.title}</h3><ul>{extras.workflowCompare.before.items.map((item) => <li key={item}>{item}</li>)}</ul></div>
-            <div><h3 className="mk-ed-compare__title">{extras.workflowCompare.after.title}</h3><ul>{extras.workflowCompare.after.items.map((item) => <li key={item}>{item}</li>)}</ul></div>
+      <div className="mk-ed-container mk-ed-workflow">
+        <div className="mk-ed-split mk-ed-split--workflow">
+          <div className="mk-ed-split__copy">
+            <p className="mk-ed-kicker">{intros.workflow.kicker}</p>
+            <h2 id="workflow-heading" className="mk-ed-heading">{intros.workflow.title}</h2>
+            <p className="mk-ed-lead">{intros.workflow.lead}</p>
+          </div>
+          <div className="mk-ed-journey mk-ed-glass-panel">
+            <p className="mk-ed-kicker">Product journey</p>
+            <div className="mk-ed-journey__steps" role="tablist" aria-label="Workflow stages">
+              {WORKFLOW_STAGES.map((item) => (
+                <button key={item.id} type="button" role="tab" aria-selected={stage === item.id} className={`mk-ed-journey__step${stage === item.id ? " is-active" : ""}`} onClick={() => setStage(item.id)}>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <p className="mk-ed-journey__detail" aria-live="polite">{current.detail}</p>
           </div>
         </div>
-        <div className="mk-ed-journey">
-          <p className="mk-ed-kicker">Product journey</p>
-          <div className="mk-ed-journey__steps" role="tablist" aria-label="Workflow stages">
-            {WORKFLOW_STAGES.map((item) => (
-              <button key={item.id} type="button" role="tab" aria-selected={stage === item.id} className={`mk-ed-journey__step${stage === item.id ? " is-active" : ""}`} onClick={() => setStage(item.id)}>
-                {item.label}
-              </button>
-            ))}
-          </div>
-          <p className="mk-ed-journey__detail" aria-live="polite">{current.detail}</p>
+        <div className="mk-ed-compare">
+          <div className="mk-ed-glass-panel"><h3 className="mk-ed-compare__title">{extras.workflowCompare.before.title}</h3><ul>{extras.workflowCompare.before.items.map((item) => <li key={item}>{item}</li>)}</ul></div>
+          <div className="mk-ed-glass-panel"><h3 className="mk-ed-compare__title">{extras.workflowCompare.after.title}</h3><ul>{extras.workflowCompare.after.items.map((item) => <li key={item}>{item}</li>)}</ul></div>
         </div>
       </div>
     </section>
@@ -73,7 +75,7 @@ export function EditorialPortfolioSection() {
           <h3>Workspace overview</h3>
           <ul><li>Leasing pipeline across properties</li><li>Maintenance queue with priority context</li><li>Collections and statements</li><li>Tasks, documents, and approvals</li></ul>
         </div>
-        <div>
+        <div className="mk-ed-split__copy">
           <p className="mk-ed-kicker">{intros.portfolio.kicker}</p>
           <h2 id="portfolio-ops-heading" className="mk-ed-heading">{intros.portfolio.title}</h2>
           <p className="mk-ed-lead">{intros.portfolio.lead}</p>
@@ -128,7 +130,7 @@ export function EditorialTrustSection() {
   return (
     <section id="trust" ref={ref} className="mk-ed-section mk-ed-section--surface mk-ed-reveal" aria-labelledby="trust-heading">
       <div className="mk-ed-container mk-ed-split mk-ed-split--trust">
-        <div>
+        <div className="mk-ed-split__copy">
           <p className="mk-ed-kicker">{intros.trust.kicker}</p><h2 id="trust-heading" className="mk-ed-heading">{intros.trust.title}</h2>
           <p className="mk-ed-lead">{intros.trust.lead}</p>
           <ul className="mk-ed-bullets"><li>Role-based workspace access</li><li>Human approval for sensitive actions</li><li>Action logs and operational history</li><li>Privacy and cookie controls</li></ul>
