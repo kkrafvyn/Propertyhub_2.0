@@ -1,12 +1,29 @@
 import { useEffect } from "react";
+import { getAppOrigin, getMarketingOrigin } from "../../../lib/marketing-urls";
+import { isMarketingPublicPath, isMarketingSite } from "../../../lib/site-mode";
+
+function pageMetaOrigin(): string {
+  if (typeof window !== "undefined") {
+    if (isMarketingSite() || isMarketingPublicPath(window.location.pathname)) {
+      return getMarketingOrigin();
+    }
+    return getAppOrigin();
+  }
+
+  const mode = import.meta.env.VITE_SITE_MODE?.trim().toLowerCase();
+  if (mode === "marketing") {
+    return getMarketingOrigin();
+  }
+  if (mode === "app") {
+    return getAppOrigin();
+  }
+
+  return getMarketingOrigin();
+}
 
 function getCanonicalHref(canonicalPath?: string) {
   if (canonicalPath) {
-    const origin = (
-      import.meta.env.VITE_PUBLIC_APP_URL ||
-      import.meta.env.VITE_SITE_URL ||
-      (typeof window !== "undefined" ? window.location.origin : "https://baytmiftah.com")
-    ).replace(/\/$/, "");
+    const origin = pageMetaOrigin();
     const path = canonicalPath.startsWith("/") ? canonicalPath : `/${canonicalPath}`;
     return `${origin}${path}`;
   }
@@ -30,11 +47,7 @@ function absoluteOgImage(ogImage: string) {
   if (ogImage.startsWith("http://") || ogImage.startsWith("https://")) {
     return ogImage;
   }
-  const origin = (
-    import.meta.env.VITE_PUBLIC_APP_URL ||
-    import.meta.env.VITE_SITE_URL ||
-    (typeof window !== "undefined" ? window.location.origin : "https://baytmiftah.com")
-  ).replace(/\/$/, "");
+  const origin = pageMetaOrigin();
   const path = ogImage.startsWith("/") ? ogImage : `/${ogImage}`;
   return `${origin}${path}`;
 }

@@ -1,7 +1,7 @@
 import { isMarketingSite } from "./site-mode";
 
 const DEFAULT_APP_ORIGIN = "https://app.baytmiftah.com";
-const DEFAULT_MARKETING_ORIGIN = "https://baytmiftah.com";
+const DEFAULT_MARKETING_ORIGIN = "https://www.baytmiftah.com";
 
 function trimTrailingSlash(value: string): string {
   return value.replace(/\/$/, "");

@@ -1,13 +1,6 @@
 import { useMemo } from "react";
 import type { MarketingPageDocument } from "../../../../lib/marketing-page-document";
-
-function siteOrigin() {
-  return (
-    import.meta.env.VITE_SITE_URL ||
-    import.meta.env.VITE_PUBLIC_APP_URL ||
-    "https://baytmiftah.com"
-  ).replace(/\/$/, "");
-}
+import { getMarketingOrigin } from "../../../../lib/marketing-urls";
 
 export function MarketingStructuredData({
   document,
@@ -17,7 +10,7 @@ export function MarketingStructuredData({
   canonicalPath?: string;
 }) {
   const json = useMemo(() => {
-    const origin = siteOrigin();
+    const origin = getMarketingOrigin();
     const url = `${origin}${canonicalPath.startsWith("/") ? canonicalPath : `/${canonicalPath}`}`;
     return {
       "@context": "https://schema.org",

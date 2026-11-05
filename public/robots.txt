@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://baytmiftah.com/sitemap.xml
+Sitemap: https://www.baytmiftah.com/sitemap.xml
 Sitemap: https://app.baytmiftah.com/sitemap-app.xml
