@@ -3,8 +3,10 @@ import {
   DEFAULT_INTEGRATION_ITEMS,
   DEFAULT_MARKETING_EXTRAS,
   DEFAULT_MARKETING_ROLES,
+  DEFAULT_PLATFORM_SURFACES,
   DEFAULT_WORKFLOW_COMPARE,
   type MarketingPageExtras,
+  type MarketingSurfaceCard,
 } from './marketing-editorial-static';
 
 export const MARKETING_IMAGE_IDS = [
@@ -101,7 +103,7 @@ export const DEFAULT_MARKETING_DOCUMENT: MarketingPageDocument = {
     title: 'Your property life.',
     secondLine: 'Your property business.',
     description:
-      'Stop running properties, payments, maintenance, leasing, and teams across disconnected tools. BaytMiftah connects discovery, workspace operations, and trust — built for Ghana with cedis, SMS, and WhatsApp norms.',
+      'Connect people who rent, buy, or book stays with professionals who list, lease, collect, and maintain — without juggling five different apps. Built for Ghana with cedis, SMS, and WhatsApp norms; international rules where your workspace enables them.',
     images: [...MARKETING_IMAGE_IDS],
   },
   seo: {
@@ -117,11 +119,6 @@ export const DEFAULT_MARKETING_DOCUMENT: MarketingPageDocument = {
     description: 'Start a workspace, explore properties, or request a demo — one platform for operators and consumers.',
   },
   sections: [
-    {
-      title: 'Mobile apps in store review',
-      body:
-        'BaytMiftah consumer and workspace apps are rolling out on Google Play closed testing and Apple App Store review. Contact us to join the tester program while public store links go live.',
-    },
     {
       title: 'Ghana-first, globally ready',
       body:
@@ -169,6 +166,36 @@ function validateExtras(input: unknown): MarketingPageExtras {
   const text = (v: unknown, name: string, max: number) => {
     if (typeof v !== 'string' || !v.trim() || v.length > max) throw new Error(`${name} is required (maximum ${max} characters).`);
   };
+
+  let heroHighlights: string[];
+  if (!Array.isArray(value.heroHighlights) || value.heroHighlights.length === 0) {
+    heroHighlights = [...fallback.heroHighlights];
+  } else {
+    if (value.heroHighlights.length > 5) throw new Error('Hero highlights can include at most five items.');
+    heroHighlights = value.heroHighlights.map((item, index) => {
+      const label = typeof item === 'string' ? item.trim() : '';
+      if (!label) throw new Error(`Hero highlight ${index + 1} is required (maximum 48 characters).`);
+      text(label, `Hero highlight ${index + 1}`, 48);
+      return label;
+    });
+  }
+
+  const platformIntro = validateIntroBlock(value.platform, fallback.platform, 'Platform section');
+  let surfaces = Array.isArray(value.platform?.surfaces) && value.platform.surfaces.length === 8
+    ? value.platform.surfaces
+    : fallback.platform.surfaces;
+  surfaces = surfaces.map((surface, index) => {
+    const fb = DEFAULT_PLATFORM_SURFACES[index] ?? DEFAULT_PLATFORM_SURFACES[0];
+    const label = typeof surface?.label === 'string' && surface.label.trim() ? surface.label : fb.label;
+    const detail = typeof surface?.detail === 'string' && surface.detail.trim() ? surface.detail : fb.detail;
+    const groupRaw = surface?.group;
+    const group: MarketingSurfaceCard['group'] =
+      groupRaw === 'Consumer' || groupRaw === 'Workspace' || groupRaw === 'Platform' ? groupRaw : fb.group;
+    text(label, `Platform surface ${index + 1} label`, 80);
+    text(detail, `Platform surface ${index + 1} detail`, 220);
+    return { label, detail, group };
+  });
+  const platform = { ...platformIntro, surfaces };
 
   const teams = validateIntroBlock(value.teams, fallback.teams, 'Teams section');
   const consumers = validateIntroBlock(value.consumers, fallback.consumers, 'Consumers section');
@@ -261,6 +288,8 @@ function validateExtras(input: unknown): MarketingPageExtras {
   });
 
   return {
+    heroHighlights,
+    platform,
     teams,
     consumers,
     integrations,
@@ -310,7 +339,8 @@ export function validateMarketingDocument(input: unknown): MarketingPageDocument
   if (!Array.isArray(value.faq) || value.faq.length < 1 || value.faq.length > 12) throw new Error('Provide 1–12 FAQs.');
   value.faq.forEach(item => { text(item.q, 'FAQ question', 200); text(item.a, 'FAQ answer', 1500); });
   if (!Array.isArray(value.sections) || value.sections.length > 8) throw new Error('Add at most eight content sections.');
-  value.sections.forEach(item => { text(item.title, 'Section title', 150); text(item.body, 'Section text', 2000); });
+  const sections = value.sections.filter((item) => item.title.trim() !== 'Mobile apps in store review');
+  sections.forEach(item => { text(item.title, 'Section title', 150); text(item.body, 'Section text', 2000); });
   const extras = validateExtras(value?.extras);
-  return structuredClone({ ...value, proofOutcomes, intros, extras });
+  return structuredClone({ ...value, proofOutcomes, intros, extras, sections });
 }

@@ -305,21 +305,35 @@
   border-block: 1px solid var(--mk-ed-glass-border);
 }
 
-/* Section intros sit directly on the photo — use light type. */
-.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section > .mk-ed-container > .mk-ed-kicker {
+/* Section copy on the photo layer (including split layouts); glass panels keep dark ink. */
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-kicker,
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container.mk-ed-faq > .mk-ed-kicker,
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-split > div:not(.mk-ed-journey):not(.mk-ed-preview-card):not(.mk-ed-trust-trace) > .mk-ed-kicker {
   color: var(--mk-ed-dark-accent);
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
 }
 
-.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section > .mk-ed-container > .mk-ed-heading {
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-heading,
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container.mk-ed-faq > .mk-ed-heading,
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-split > div:not(.mk-ed-journey):not(.mk-ed-preview-card):not(.mk-ed-trust-trace) > .mk-ed-heading {
   color: var(--mk-ed-on-photo-ink);
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.55);
 }
 
-.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section > .mk-ed-container > .mk-ed-lead,
-.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section > .mk-ed-container > .mk-ed-note {
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > :is(.mk-ed-lead, .mk-ed-note),
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-split > div:not(.mk-ed-journey):not(.mk-ed-preview-card):not(.mk-ed-trust-trace) > :is(.mk-ed-lead, .mk-ed-note) {
   color: var(--mk-ed-on-photo-muted);
   text-shadow: 0 1px 16px rgba(0, 0, 0, 0.5);
+}
+
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-split > div:not(.mk-ed-journey):not(.mk-ed-preview-card):not(.mk-ed-trust-trace) .mk-ed-bullets {
+  color: var(--mk-ed-on-photo-muted);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+}
+
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-section:not(.mk-ed-section--dark) > .mk-ed-container > .mk-ed-split > div:not(.mk-ed-journey):not(.mk-ed-preview-card):not(.mk-ed-trust-trace) .mk-ed-link {
+  color: var(--mk-ed-dark-accent);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -331,7 +345,8 @@
   .marketing-page--editorial .mk-ed-page--carousel .mk-ed-compare > div,
   .marketing-page--editorial .mk-ed-page--carousel .mk-ed-journey,
   .marketing-page--editorial .mk-ed-page--carousel .mk-ed-callout--accent,
-  .marketing-page--editorial .mk-ed-page--carousel .mk-ed-faq {
+  .marketing-page--editorial .mk-ed-page--carousel .mk-ed-faq,
+  .marketing-page--editorial .mk-ed-page--carousel .mk-ed-surfaces__card {
     background: var(--mk-ed-glass-light-solid);
   }
 }
@@ -345,6 +360,7 @@
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-journey,
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-callout--accent,
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-faq,
+.marketing-page--editorial .mk-ed-page--carousel .mk-ed-surfaces__card,
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-integration-list li,
 .marketing-page--editorial .mk-ed-page--carousel .mk-ed-steps li > div:last-child {
   background: var(--mk-ed-glass-light);
@@ -683,6 +699,66 @@
   outline: 2px solid var(--mk-ed-focus);
   outline-offset: 3px;
   border-radius: 4px;
+}
+
+.mk-ed-hero__highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  max-width: 38rem;
+}
+
+.mk-ed-hero__highlights li {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 241, 232, 0.35);
+  background: rgba(13, 25, 19, 0.42);
+  color: var(--mk-ed-on-photo-ink);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.mk-ed-surfaces {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1rem;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk-ed-surfaces__card {
+  border-radius: 14px;
+  padding: 1.1rem 1.15rem;
+  min-width: 0;
+}
+
+.mk-ed-surfaces__card h3 {
+  margin: 0.35rem 0 0.5rem;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.mk-ed-surfaces__card p:last-child {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--mk-ed-ink-secondary);
+}
+
+.mk-ed-surfaces__group {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mk-ed-terra);
 }
 
 @media (max-width: 639px) {

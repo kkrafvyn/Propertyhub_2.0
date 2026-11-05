@@ -3,7 +3,7 @@
     "eyebrow": "Real Estate Operating System",
     "title": "Your property life.",
     "secondLine": "Your property business.",
-    "description": "Stop running properties, payments, maintenance, leasing, and teams across disconnected tools. BaytMiftah connects discovery, workspace operations, and trust — built for Ghana with cedis, SMS, and WhatsApp norms.",
+    "description": "Connect people who rent, buy, or book stays with professionals who list, lease, collect, and maintain — without juggling five different apps. Built for Ghana with cedis, SMS, and WhatsApp norms; international rules where your workspace enables them.",
     "images": [
       "residences",
       "interior",
@@ -107,15 +107,64 @@
   },
   "sections": [
     {
-      "title": "Mobile apps in store review",
-      "body": "BaytMiftah consumer and workspace apps are rolling out on Google Play closed testing and Apple App Store review. Contact us to join the tester program while public store links go live."
-    },
-    {
       "title": "Ghana-first, globally ready",
       "body": "Cedis pricing, local trust workflows, SMS and WhatsApp omnichannel, and KYC paths reflect how property business runs in Ghana — with multi-currency and cross-border listing logic where your workspace enables it."
     }
   ],
   "extras": {
+    "heroHighlights": [
+      "Ghana-first REOS",
+      "Cedis & mobile money",
+      "SMS & WhatsApp",
+      "103 workspace modules"
+    ],
+    "platform": {
+      "kicker": "Architecture",
+      "title": "Eight surfaces. One operating system.",
+      "lead": "Consumer and workspace products share auth, org data, and operational history — from marketplace discovery through lease, collections, and maintenance.",
+      "surfaces": [
+        {
+          "label": "Consumer web",
+          "detail": "Search, compare, apply, and manage your property life in the browser.",
+          "group": "Consumer"
+        },
+        {
+          "label": "Consumer Android & iOS",
+          "detail": "Native apps for discovery, payments, messaging, and journeys on the go.",
+          "group": "Consumer"
+        },
+        {
+          "label": "Workspace web",
+          "detail": "CRM-to-ERP operations: listings, leases, finance, and field workflows.",
+          "group": "Workspace"
+        },
+        {
+          "label": "Workspace mobile",
+          "detail": "Android and iOS apps for managers and teams in the field.",
+          "group": "Workspace"
+        },
+        {
+          "label": "Workspace desktop",
+          "detail": "Windows Electron shell for high-volume desk work and My Work–first navigation.",
+          "group": "Workspace"
+        },
+        {
+          "label": "Platform admin",
+          "detail": "Trust, fraud, revenue, CMS, and feature controls for operators.",
+          "group": "Platform"
+        },
+        {
+          "label": "Shared auth & org model",
+          "detail": "One account links consumer journeys and workspace membership where applicable.",
+          "group": "Platform"
+        },
+        {
+          "label": "Unified data layer",
+          "detail": "Supabase-backed records, RLS, and audit history across every surface.",
+          "group": "Platform"
+        }
+      ]
+    },
     "teams": {
       "kicker": "One platform, many teams",
       "title": "Built for the people behind real estate",
@@ -293,7 +342,7 @@
       "statusHref": "/status"
     },
     "storeLinks": {
-      "showStrip": true,
+      "showStrip": false,
       "headline": "Take BaytMiftah with you",
       "lead": "Consumer and workspace native apps complement the web experience. Store availability varies by platform and release track.",
       "consumerPlayUrl": "",

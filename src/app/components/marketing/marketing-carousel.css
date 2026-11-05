@@ -157,6 +157,34 @@
   outline-offset: 4px;
 }
 
+.mk-photo-hero__indicators {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 1rem 1.25rem;
+  pointer-events: none;
+}
+
+.mk-photo-hero__indicator {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: rgba(245, 241, 232, 0.28);
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.mk-photo-hero__indicator.is-ready {
+  background: rgba(245, 241, 232, 0.5);
+}
+
+.mk-photo-hero__indicator.is-active {
+  transform: scale(1.35);
+  background: #f0a18b;
+}
+
 @media (max-width: 639px) {
   .mk-photo-hero {
     min-height: 100dvh;

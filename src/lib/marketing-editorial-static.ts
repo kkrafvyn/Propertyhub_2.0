@@ -40,7 +40,19 @@ export type MarketingAppPreviews = {
   workspacePosterSrc: string;
 };
 
+export type MarketingSurfaceCard = {
+  label: string;
+  detail: string;
+  group: 'Consumer' | 'Workspace' | 'Platform';
+};
+
+export type MarketingPlatformBand = MarketingIntro & {
+  surfaces: MarketingSurfaceCard[];
+};
+
 export type MarketingPageExtras = {
+  heroHighlights: string[];
+  platform: MarketingPlatformBand;
   teams: MarketingIntro;
   consumers: MarketingIntro;
   integrations: MarketingIntro;
@@ -52,6 +64,17 @@ export type MarketingPageExtras = {
   storeLinks: MarketingStoreLinks;
   appPreviews: MarketingAppPreviews;
 };
+
+export const DEFAULT_PLATFORM_SURFACES: MarketingSurfaceCard[] = [
+  { group: 'Consumer', label: 'Consumer web', detail: 'Search, compare, apply, and manage your property life in the browser.' },
+  { group: 'Consumer', label: 'Consumer Android & iOS', detail: 'Native apps for discovery, payments, messaging, and journeys on the go.' },
+  { group: 'Workspace', label: 'Workspace web', detail: 'CRM-to-ERP operations: listings, leases, finance, and field workflows.' },
+  { group: 'Workspace', label: 'Workspace mobile', detail: 'Android and iOS apps for managers and teams in the field.' },
+  { group: 'Workspace', label: 'Workspace desktop', detail: 'Windows Electron shell for high-volume desk work and My Work–first navigation.' },
+  { group: 'Platform', label: 'Platform admin', detail: 'Trust, fraud, revenue, CMS, and feature controls for operators.' },
+  { group: 'Platform', label: 'Shared auth & org model', detail: 'One account links consumer journeys and workspace membership where applicable.' },
+  { group: 'Platform', label: 'Unified data layer', detail: 'Supabase-backed records, RLS, and audit history across every surface.' },
+];
 
 export const DEFAULT_MARKETING_ROLES: MarketingRolePreview[] = [
   {
@@ -157,6 +180,13 @@ export const DEFAULT_INTEGRATION_ITEMS: MarketingIntegrationItem[] = [
 ];
 
 export const DEFAULT_MARKETING_EXTRAS: MarketingPageExtras = {
+  heroHighlights: ['Ghana-first REOS', 'Cedis & mobile money', 'SMS & WhatsApp', '103 workspace modules'],
+  platform: {
+    kicker: 'Architecture',
+    title: 'Eight surfaces. One operating system.',
+    lead: 'Consumer and workspace products share auth, org data, and operational history — from marketplace discovery through lease, collections, and maintenance.',
+    surfaces: DEFAULT_PLATFORM_SURFACES.map((surface) => ({ ...surface })),
+  },
   teams: {
     kicker: 'One platform, many teams',
     title: 'Built for the people behind real estate',
@@ -183,7 +213,7 @@ export const DEFAULT_MARKETING_EXTRAS: MarketingPageExtras = {
     statusHref: '/status',
   },
   storeLinks: {
-    showStrip: true,
+    showStrip: false,
     headline: 'Take BaytMiftah with you',
     lead: 'Consumer and workspace native apps complement the web experience. Store availability varies by platform and release track.',
     consumerPlayUrl: '',

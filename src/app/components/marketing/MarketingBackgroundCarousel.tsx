@@ -113,6 +113,18 @@ export function MarketingBackgroundCarousel({ children, imageIds }: { children: 
         ) : null)}
       </div>
       <div className="mk-photo-hero__content">{children}</div>
+      {slides.length > 1 && ready.length > 1 && !reduced ? (
+        <div className="mk-photo-hero__indicators" aria-hidden="true">
+          {slides.map((slide, index) =>
+            failed.includes(index) ? null : (
+              <span
+                key={slide.id}
+                className={`mk-photo-hero__indicator${index === active ? " is-active" : ready.includes(index) ? " is-ready" : ""}`}
+              />
+            ),
+          )}
+        </div>
+      ) : null}
     </section>
   );
 }

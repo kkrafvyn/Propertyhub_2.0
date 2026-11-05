@@ -20,7 +20,8 @@ import {
   EditorialTrustSection,
   EditorialWorkflowSection,
 } from "../../components/marketing/editorial/EditorialHomeSections";
-import { EditorialAppPreviewSection, EditorialStoreStripSection } from "../../components/marketing/editorial/EditorialConversionSections";
+import { EditorialAppPreviewSection } from "../../components/marketing/editorial/EditorialConversionSections";
+import { EditorialPlatformSection } from "../../components/marketing/editorial/EditorialPlatformSection";
 
 function heroOgImage(document: MarketingPageDocument) {
   const first = document.hero.images[0] ?? "residences";
@@ -127,9 +128,9 @@ export function MarketingEditorialHome({ document: suppliedDocument, preview = f
       <div id="mk-main-content" className="mk-ed-page mk-ed-page--carousel" tabIndex={-1}>
         <EditorialHero />
         <EditorialOutcomeSection />
+        <EditorialPlatformSection />
         <EditorialProductTour />
         <EditorialAppPreviewSection />
-        <EditorialStoreStripSection />
         <EditorialWorkflowSection />
         <EditorialRolesSection />
         <EditorialResidentSection />

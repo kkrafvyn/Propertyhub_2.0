@@ -12,6 +12,7 @@ describe("marketing editorial homepage data", () => {
   it("exposes anchor targets used in navigation", () => {
     const hrefs = EDITORIAL_NAV_LINKS.map((l) => l.href);
     expect(hrefs).toContain("#product-tour");
+    expect(hrefs).toContain("#platform");
     expect(hrefs).toContain("#workflow");
     expect(hrefs).toContain("#features");
     expect(hrefs).toContain("#trust");

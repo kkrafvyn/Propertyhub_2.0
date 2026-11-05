@@ -5,7 +5,8 @@ import { MarketingBackgroundCarousel } from "../MarketingBackgroundCarousel";
 import { trackMarketingEvent } from "./marketing-editorial-analytics";
 
 export function EditorialHero() {
-  const { hero } = useMarketingContent();
+  const { hero, extras } = useMarketingContent();
+  const highlights = extras.heroHighlights;
 
   return (
     <MarketingBackgroundCarousel key={hero.images.join(",")} imageIds={hero.images}>
@@ -23,6 +24,13 @@ export function EditorialHero() {
             <a href={appPath("/search")} className="mk-ed-btn mk-ed-btn--ghost" onClick={() => trackMarketingEvent("marketing_cta_click", { placement: "hero_explore_properties" })}>Explore Properties</a>
             <a href="#product-tour" className="mk-ed-btn mk-ed-btn--ghost" onClick={() => trackMarketingEvent("marketing_cta_click", { placement: "hero_product_tour" })}>Product tour</a>
           </div>
+          {highlights.length > 0 ? (
+            <ul className="mk-ed-hero__highlights" aria-label="Product highlights">
+              {highlights.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       </div>
     </MarketingBackgroundCarousel>

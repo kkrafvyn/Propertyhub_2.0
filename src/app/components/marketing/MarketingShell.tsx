@@ -285,9 +285,6 @@ function MarketingFooter({ darkChrome }: { darkChrome: boolean }) {
               <a href="/#features">Modules</a>
             </li>
             <li>
-              <a href="/#apps">Mobile apps</a>
-            </li>
-            <li>
               <a href="/#ai">AI</a>
             </li>
             <li>
