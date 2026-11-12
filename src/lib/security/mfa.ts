@@ -4,6 +4,9 @@ import type { MemberRole } from "../workspace";
 
 const MFA_SENSITIVE_PERMISSIONS: WorkspacePermission[] = ["finance:write", "team:manage"];
 
+/** Session-only deferral so owners/managers can continue into workspace before enrolling TOTP. */
+const WORKSPACE_MFA_SKIP_KEY = "baytmiftah.workspaceMfaSkip";
+
 /** Operational workspace roles that always require MFA (even without finance/team permissions). */
 const WORKSPACE_MFA_ROLES = new Set<MemberRole>([
   "owner",
@@ -25,18 +28,43 @@ export function workspaceRoleRequiresMfa(
   );
 }
 
-/** Workspace/admin gates: require enrolled TOTP and current AAL2 when step-up is available. */
-export async function hasMfaAssurance() {
-  const enrolled = await userHasEnrolledMfa();
-  if (!enrolled) {
+export function hasWorkspaceMfaSkip(): boolean {
+  if (typeof sessionStorage === "undefined") return false;
+  try {
+    return sessionStorage.getItem(WORKSPACE_MFA_SKIP_KEY) === "1";
+  } catch {
     return false;
   }
-  const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (error) return false;
-  if (data?.nextLevel === "aal2") {
-    return data.currentLevel === "aal2";
+}
+
+export function setWorkspaceMfaSkip(): void {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    sessionStorage.setItem(WORKSPACE_MFA_SKIP_KEY, "1");
+  } catch {
+    // ignore quota / private-mode failures
   }
-  return enrolled;
+}
+
+export function clearWorkspaceMfaSkip(): void {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    sessionStorage.removeItem(WORKSPACE_MFA_SKIP_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+/** Workspace/admin gates fail closed unless an enrolled factor and current AAL2 are confirmed. */
+export async function hasMfaAssurance() {
+  try {
+    const enrolled = await userHasEnrolledMfa();
+    if (!enrolled) return false;
+    const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    return !error && data?.currentLevel === "aal2";
+  } catch {
+    return false;
+  }
 }
 
 export async function userHasEnrolledMfa() {

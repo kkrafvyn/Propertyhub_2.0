@@ -2,7 +2,7 @@ import { getPayangelsPublicKey } from "./integrations";
 
 const PAYANGELS_SCRIPT_SRC = "https://js.payangels.co/v1/inline.js";
 
-let scriptPromise: Promise<NonNullable<Window["PaystackPop"]>> | null = null;
+let scriptPromise: Promise<PayAngelsPopStatic> | null = null;
 
 export type OpenPayAngelsInlineInput = {
   email: string;
@@ -14,28 +14,34 @@ export type OpenPayAngelsInlineInput = {
   onClose?: () => void;
 };
 
-/** @deprecated Use OpenPayAngelsInlineInput */
-export type OpenPaystackInlineInput = OpenPayAngelsInlineInput;
+function resolveInlinePop(): PayAngelsPopStatic | undefined {
+  if (typeof window === "undefined") return undefined;
+  return window.PayAngelsPop || window.PaystackPop;
+}
 
-export function loadPayAngelsInline(): Promise<NonNullable<Window["PaystackPop"]>> {
+export function loadPayAngelsInline(): Promise<PayAngelsPopStatic> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Checkout is only available in the browser."));
   }
 
-  if ((window as any).PaystackPop) {
-    return Promise.resolve((window as any).PaystackPop);
+  const existingPop = resolveInlinePop();
+  if (existingPop) {
+    return Promise.resolve(existingPop);
   }
 
   if (!scriptPromise) {
     scriptPromise = new Promise((resolve, reject) => {
+      const finish = () => {
+        const pop = resolveInlinePop();
+        if (pop) resolve(pop);
+        else reject(new Error("Checkout failed to load."));
+      };
+
       const existing = document.querySelector<HTMLScriptElement>(
         `script[src="${PAYANGELS_SCRIPT_SRC}"]`,
       );
       if (existing) {
-        existing.addEventListener("load", () => {
-          if ((window as any).PaystackPop) resolve((window as any).PaystackPop);
-          else reject(new Error("Checkout failed to load."));
-        });
+        existing.addEventListener("load", finish);
         existing.addEventListener("error", () => reject(new Error("Checkout failed to load.")));
         return;
       }
@@ -43,10 +49,7 @@ export function loadPayAngelsInline(): Promise<NonNullable<Window["PaystackPop"]
       const script = document.createElement("script");
       script.src = PAYANGELS_SCRIPT_SRC;
       script.async = true;
-      script.onload = () => {
-        if ((window as any).PaystackPop) resolve((window as any).PaystackPop);
-        else reject(new Error("Checkout failed to load."));
-      };
+      script.onload = finish;
       script.onerror = () => reject(new Error("Checkout failed to load."));
       document.body.appendChild(script);
     });
@@ -54,9 +57,6 @@ export function loadPayAngelsInline(): Promise<NonNullable<Window["PaystackPop"]
 
   return scriptPromise;
 }
-
-/** @deprecated Use loadPayAngelsInline */
-export const loadPaystackInline = loadPayAngelsInline;
 
 export async function openPayAngelsInline(input: OpenPayAngelsInlineInput) {
   const publicKey = getPayangelsPublicKey();
@@ -96,6 +96,3 @@ export async function openPayAngelsInline(input: OpenPayAngelsInlineInput) {
     handler.openIframe();
   });
 }
-
-/** @deprecated Use openPayAngelsInline */
-export const openPaystackInline = openPayAngelsInline;

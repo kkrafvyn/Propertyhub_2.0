@@ -1,6 +1,7 @@
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { chatCompletion, isLlmConfigured, resolveAiProvider } from "../_shared/llm-provider.ts";
 import { requireOrgMembership } from "../_shared/org-auth.ts";
+import { reserveAiAction } from '../_shared/ai-budget.ts';
 import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
 
 const IMPORT_TYPES = [
@@ -43,7 +44,7 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    const { user } = await requireAuthenticatedUser(authHeader);
+    const { user, userClient } = await requireAuthenticatedUser(authHeader);
     const body = await req.json().catch(() => null);
 
     const organizationId = typeof body?.organizationId === "string" ? body.organizationId.trim() : "";
@@ -73,6 +74,7 @@ Deno.serve(async (req) => {
       });
     }
 
+    await reserveAiAction(userClient,organizationId,'ImportAgent','import_data');
     const headers = SCHEMA[importTypeRaw];
     const sampleText = matrixSample
       ? JSON.stringify(matrixSample).slice(0, 8_000)

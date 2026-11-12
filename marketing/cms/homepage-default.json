@@ -145,7 +145,7 @@
         },
         {
           "label": "Workspace desktop",
-          "detail": "Windows Electron shell for high-volume desk work and My Work–first navigation.",
+          "detail": "Windows desktop app for high-volume desk work and My Work–first navigation.",
           "group": "Workspace"
         },
         {
@@ -159,8 +159,8 @@
           "group": "Platform"
         },
         {
-          "label": "Unified data layer",
-          "detail": "Supabase-backed records, RLS, and audit history across every surface.",
+          "label": "Shared records & audit",
+          "detail": "Listings, leases, payments, and work history stay consistent — with a full trail across every surface.",
           "group": "Platform"
         }
       ]

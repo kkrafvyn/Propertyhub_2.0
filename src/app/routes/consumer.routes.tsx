@@ -256,6 +256,13 @@ export const consumerRoutes: RouteObject[] = [
   // ── User Dashboard ──────────────────────────────────────────────
   // Standalone /app routes use ConsumerHubChrome + PageLayout (not UserDashboard outlet).
   {
+    path: 'app/support',
+    lazy: async () => {
+      const { SupportCases } = await import('../pages/user/SupportCases');
+      return { Component: function ProtectedSupportRoute() { return <ProtectedRoute><SupportCases /></ProtectedRoute>; } };
+    },
+  },
+  {
     path: 'app/security',
     lazy: async () => {
       const { SecuritySettingsPage } = await import('../pages/user/SecuritySettings');

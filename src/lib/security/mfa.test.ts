@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { workspaceRoleRequiresMfa } from "./mfa";
+import { describe, expect, it, beforeEach } from "vitest";
+import {
+  clearWorkspaceMfaSkip,
+  hasWorkspaceMfaSkip,
+  setWorkspaceMfaSkip,
+  workspaceRoleRequiresMfa,
+} from "./mfa";
 
 describe("workspaceRoleRequiresMfa", () => {
   it("requires MFA for finance write roles", () => {
@@ -20,5 +25,19 @@ describe("workspaceRoleRequiresMfa", () => {
 
   it("honours custom permission grants", () => {
     expect(workspaceRoleRequiresMfa("analyst", ["finance:write"])).toBe(true);
+  });
+});
+
+describe("workspace MFA skip", () => {
+  beforeEach(() => {
+    clearWorkspaceMfaSkip();
+  });
+
+  it("stores a session skip flag", () => {
+    expect(hasWorkspaceMfaSkip()).toBe(false);
+    setWorkspaceMfaSkip();
+    expect(hasWorkspaceMfaSkip()).toBe(true);
+    clearWorkspaceMfaSkip();
+    expect(hasWorkspaceMfaSkip()).toBe(false);
   });
 });

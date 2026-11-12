@@ -302,6 +302,7 @@ const RLS_EXEMPT_TABLES = new Set<string>([]);
 // an explicit policy. Keeping the list explicit prevents new silent deny-all
 // tables from appearing unnoticed.
 const INTENTIONAL_ZERO_POLICY_TABLES = new Set([
+  'public.ai_usage_reservations',
   'public.estate_visitor_pass_attempts',
   'public.estate_visitor_pass_policies',
   'public.fraud_reports',

@@ -132,10 +132,6 @@ export function shouldUsePayangelsCheckout(_context?: PaymentContext) {
   return true;
 }
 
-export function shouldUsePaystackCheckout(context: PaymentContext) {
-  return shouldUsePayangelsCheckout(context);
-}
-
 export function getPreferredProviderIds(context: PaymentContext): string[] {
   if (clientIntegrations.payangels.checkoutReady) {
     return ["payangels", ...context.availableRails.map((r) => r.id).filter((id) => !isPayAngelsWorldwideRail(id))];

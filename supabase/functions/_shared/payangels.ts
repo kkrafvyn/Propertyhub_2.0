@@ -1,4 +1,5 @@
 import { HttpError } from "./http.ts";
+import { createAdminClient } from './supabase.ts';
 
 function getPayangelsApiBase() {
   const configured = Deno.env.get("PAYANGELS_API_BASE")?.trim();
@@ -24,7 +25,7 @@ function isPayangelsContractVerified() {
   );
 }
 
-export interface PaystackInitializeInput {
+export interface PayAngelsInitializeInput {
   amount: string;
   email: string;
   currency: string;
@@ -34,7 +35,7 @@ export interface PaystackInitializeInput {
   metadata?: Record<string, unknown>;
 }
 
-export interface PaystackTransactionData {
+export interface PayAngelsTransactionData {
   id?: number | string;
   status?: string;
   reference?: string;
@@ -49,7 +50,7 @@ export interface PaystackTransactionData {
   metadata?: Record<string, unknown>;
 }
 
-export interface PaystackCreateRefundInput {
+export interface PayAngelsCreateRefundInput {
   transaction: string | number;
   amount?: number;
   currency?: string;
@@ -57,7 +58,7 @@ export interface PaystackCreateRefundInput {
   merchant_note?: string;
 }
 
-export interface PaystackRefundData {
+export interface PayAngelsRefundData {
   id?: number | string;
   integration?: number;
   domain?: string;
@@ -94,7 +95,7 @@ export interface PaystackRefundData {
   } | null;
 }
 
-export interface PaystackRefundWebhookData {
+export interface PayAngelsRefundWebhookData {
   id?: number | string;
   status?: string;
   transaction_reference?: string;
@@ -216,7 +217,7 @@ async function payangelsFetch<T>(path: string, init: RequestInit = {}) {
   return payload.data;
 }
 
-export async function initializePayangelsTransaction(input: PaystackInitializeInput) {
+export async function initializePayangelsTransaction(input: PayAngelsInitializeInput) {
   if (!isPayangelsConfigured()) {
     throw new HttpError(503, "Checkout is not configured");
   }
@@ -234,7 +235,7 @@ export async function verifyPayangelsTransaction(reference: string) {
   if (!isPayangelsConfigured()) {
     throw new HttpError(503, "Payment verification is not configured");
   }
-  return payangelsFetch<PaystackTransactionData>(
+  return payangelsFetch<PayAngelsTransactionData>(
     `/transaction/verify/${encodeURIComponent(reference)}`,
     {
       method: "GET",
@@ -242,8 +243,12 @@ export async function verifyPayangelsTransaction(reference: string) {
   );
 }
 
-export async function createPayangelsRefund(input: PaystackCreateRefundInput) {
-  return payangelsFetch<PaystackRefundData>("/refund", {
+export async function createPayangelsRefund(input: PayAngelsCreateRefundInput) {
+  if (!isPayangelsConfigured()) throw new HttpError(503,'Refund provider is not configured');
+  const {error}=await createAdminClient().rpc('claim_property_refund_execution',{p_reference:String(input.transaction),p_amount:input.amount ?? null});
+  if(error)throw new HttpError(409,'Refund is already in progress, exceeds the balance, or needs reconciliation. Refresh the ledger before retrying.');
+  // Keep the lock if the provider result is ambiguous. Only ledger persistence releases it.
+  return payangelsFetch<PayAngelsRefundData>("/refund", {
     method: "POST",
     body: JSON.stringify(input),
   });

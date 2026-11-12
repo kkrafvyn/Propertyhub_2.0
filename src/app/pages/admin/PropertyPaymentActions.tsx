@@ -1,0 +1,16 @@
+import { useEffect,useRef,useState } from 'react';
+import { paymentService } from '../../../lib/payment.service';
+import { supabase } from '../../../lib/supabase';
+import type { AdminRecord } from '../../../lib/admin-operations.service';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+export function PropertyPaymentActions({row,onSaved}:{row:AdminRecord;onSaved:()=>void}){
+ const [amount,setAmount]=useState('');const [reason,setReason]=useState('');const [confirmed,setConfirmed]=useState(false);const [busy,setBusy]=useState(false);const [error,setError]=useState('');const pending=useRef(false);
+ const [refunds,setRefunds]=useState<Array<{id:string;amount_minor:number;status:string}>>([]);
+ useEffect(()=>{let cancelled=false;supabase.from('property_refunds').select('id,amount_minor,status').eq('transaction_id',row.id).order('created_at',{ascending:false}).then(({data,error})=>{if(cancelled)return;if(error)setError('Refund history is unavailable; refresh before issuing a refund.');else setRefunds(data||[]);});return()=>{cancelled=true;};},[row.id]);
+ const remaining=Math.max(Number(row.amount_minor)-Number(row.refunded_amount_minor||0),0)/100;
+ async function run(refund:boolean){if(pending.current)return;pending.current=true;setBusy(true);setError('');try{if(refund){if(!confirmed)throw new Error('Confirm the refund first.');await paymentService.initiatePropertyRefund({transactionId:row.id,amount,reason});}else await paymentService.verifyPropertyPayment(String(row.provider_reference));onSaved();}catch(error){setError(error instanceof Error?error.message:'Payment operation failed. Refresh the ledger before retrying.');}finally{pending.current=false;setBusy(false);}}
+ return <section className="space-y-4 border-t border-border pt-4"><h3 className="font-semibold">Property payment operations</h3><Button variant="outline" disabled={busy} onClick={()=>void run(false)}>Verify and reconcile with provider</Button><ul className="space-y-2">{refunds.map(refund=><li key={refund.id} className="text-sm">Refund: {String(row.currency)} {(Number(refund.amount_minor)/100).toFixed(2)} · {refund.status}</li>)}</ul>
+ {row.status==='success'&&remaining>0?<form className="space-y-3" onSubmit={event=>{event.preventDefault();void run(true);}}><p className="text-sm">Remaining refundable balance: {String(row.currency)} {remaining.toFixed(2)}</p><Input label="Refund amount" type="number" required min="0.01" max={remaining} step="0.01" value={amount} onChange={event=>setAmount(event.target.value)} disabled={busy}/><Input label="Refund reason" required minLength={10} maxLength={1000} value={reason} onChange={event=>setReason(event.target.value)} disabled={busy}/><label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={confirmed} onChange={event=>setConfirmed(event.target.checked)} disabled={busy}/>I approve refunding this amount to the original payer. This sends a real refund request to the payment provider.</label><Button variant="destructive" type="submit" disabled={busy||!confirmed||!amount||!!error}>Issue confirmed refund</Button></form>:null}
+ {error?<p role="alert" className="text-sm text-destructive">{error}</p>:null}</section>;
+}

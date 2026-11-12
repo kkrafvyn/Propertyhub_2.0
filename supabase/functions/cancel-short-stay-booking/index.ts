@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
               refundReason: reason,
               customerNote: reason,
               merchantNote: reason,
-              paystackRefund: payangelsRefund,
+              payangelsRefund: payangelsRefund,
               metadata: { booking_id: bookingId },
             });
 

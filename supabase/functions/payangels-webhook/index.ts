@@ -1,7 +1,7 @@
 import { HttpError, jsonResponse } from "../_shared/http.ts";
 import { recordWebhookEvent } from "../_shared/audit-log.ts";
-import { reconcilePaystackPayment } from "../_shared/payment-reconciliation.ts";
-import { reconcilePaystackRefundWebhook } from "../_shared/refund-reconciliation.ts";
+import { reconcilePayAngelsPayment } from "../_shared/payment-reconciliation.ts";
+import { reconcilePayAngelsRefundWebhook } from "../_shared/refund-reconciliation.ts";
 import {
   verifyPayangelsTransaction,
   verifyPayangelsWebhookSignature,
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
       }
 
       const verifiedTransaction = await verifyPayangelsTransaction(reference);
-      const result = await reconcilePaystackPayment({
+      const result = await reconcilePayAngelsPayment({
         reference,
         verifiedTransaction,
         source: "webhook",
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
     }
 
     if ((event.event || "").startsWith("refund.")) {
-      const result = await reconcilePaystackRefundWebhook({
+      const result = await reconcilePayAngelsRefundWebhook({
         event: event.event || "refund.unknown",
         refund: event.data || {},
       });

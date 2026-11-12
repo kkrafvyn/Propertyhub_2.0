@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    const { user } = await requireAuthenticatedUser(authHeader);
+    const { user, userClient } = await requireAuthenticatedUser(authHeader);
     const requestBody = await req.json().catch(() => null);
     const transactionId =
       typeof requestBody?.transactionId === "string" ? requestBody.transactionId.trim() : "";
@@ -76,12 +76,16 @@ Deno.serve(async (req) => {
     // Guest booking cancellations use cancel-short-stay-booking, which derives the
     // refundable amount from the server-owned booking policy. This generic endpoint
     // is deliberately finance-only so a payer cannot invent their own refund.
-    await requireOrgWorkspacePermission(
+    const {error:platformDenied}=await userClient.rpc('admin_require_payment_access');
+    if(platformDenied) {
+    const access=await requireOrgWorkspacePermission(
       admin,
       user.id,
       transaction.organization_id,
       "finance:write",
     );
+    if(access.role==='platform_admin')throw new HttpError(403,'Complete platform two-factor verification before issuing refunds');
+    }
 
     if (!["success", "reversal_pending"].includes(transaction.status)) {
       throw new HttpError(400, "Only successful property payments can be refunded");
@@ -127,7 +131,7 @@ Deno.serve(async (req) => {
       refundReason,
       customerNote: customerNote || refundReason,
       merchantNote: merchantNote || refundReason,
-      paystackRefund: payangelsRefund,
+      payangelsRefund: payangelsRefund,
     });
 
     return jsonResponse(200, {

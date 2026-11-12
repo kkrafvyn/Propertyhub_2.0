@@ -62,6 +62,6 @@ export function EditorialIntegrationsSection() {
   const ref = useEditorialReveal<HTMLElement>();
   return <section id="integrations" ref={ref} className="mk-ed-section mk-ed-reveal" aria-labelledby="integrations-heading"><div className="mk-ed-container">
     <p className="mk-ed-kicker">{extras.integrations.kicker}</p><h2 id="integrations-heading" className="mk-ed-heading">{extras.integrations.title}</h2><p className="mk-ed-lead">{extras.integrations.lead}</p>
-    <ul className="mk-ed-integration-list">{extras.integrationItems.map((item) => <li key={item.name}><strong>{item.name}</strong><span className="mk-ed-badge mk-ed-badge--conditional">Setup required</span><p>{item.detail}</p></li>)}</ul>
+    <ul className="mk-ed-integration-list">{extras.integrationItems.map((item) => <li key={item.name}><strong>{item.name}</strong><p>{item.detail}</p></li>)}</ul>
   </div></section>;
 }

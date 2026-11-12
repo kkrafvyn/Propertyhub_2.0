@@ -1,4 +1,4 @@
-interface PaystackCallbackResponse {
+interface PayAngelsCallbackResponse {
   reference: string;
   status: string;
   message?: string;
@@ -6,12 +6,12 @@ interface PaystackCallbackResponse {
   transaction?: string;
 }
 
-interface PaystackInlineHandler {
+interface PayAngelsInlineHandler {
   openIframe: () => void;
   openPopup: () => void;
 }
 
-interface PaystackInlineOptions {
+interface PayAngelsInlineOptions {
   key?: string;
   email?: string;
   amount?: number;
@@ -20,13 +20,15 @@ interface PaystackInlineOptions {
   currency?: string;
   channels?: string[];
   onClose?: () => void;
-  callback?: (response: PaystackCallbackResponse) => void;
+  callback?: (response: PayAngelsCallbackResponse) => void;
 }
 
-interface PaystackPopStatic {
-  setup: (options: PaystackInlineOptions) => PaystackInlineHandler;
+interface PayAngelsPopStatic {
+  setup: (options: PayAngelsInlineOptions) => PayAngelsInlineHandler;
 }
 
 interface Window {
-  PaystackPop?: PaystackPopStatic;
+  PayAngelsPop?: PayAngelsPopStatic;
+  /** Some PayAngels CDN builds historically exposed this Paystack-compatible global. */
+  PaystackPop?: PayAngelsPopStatic;
 }

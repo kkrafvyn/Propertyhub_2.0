@@ -11,8 +11,8 @@ export type AIGovernanceControl = {
 
 export function evaluateAiActionBudget(control: { enabled: boolean; dailyActionBudget: number; actionCount: number }): boolean {
   if (!control.enabled) return false;
-  if (control.dailyActionBudget < 0) return false;
-  return control.actionCount <= control.dailyActionBudget;
+  if (!Number.isInteger(control.dailyActionBudget) || !Number.isInteger(control.actionCount) || control.actionCount < 0) return false;
+  return control.actionCount < control.dailyActionBudget;
 }
 
 export function canExecuteAiAction(control: { enabled: boolean; dailyActionBudget: number; actionCount: number }): boolean {

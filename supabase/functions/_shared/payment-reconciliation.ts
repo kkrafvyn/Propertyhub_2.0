@@ -1,6 +1,6 @@
 import { HttpError } from "./http.ts";
-import { PaystackTransactionData } from "./payangels.ts";
-import { assertPaystackAmountMatch } from "./payment-pricing.ts";
+import { PayAngelsTransactionData } from "./payangels.ts";
+import { assertPayAngelsAmountMatch } from "./payment-pricing.ts";
 import { redeemPromoCode } from "./promo-pricing.ts";
 import { resolveOrganizationCreditMinor } from "./platform-fee.ts";
 import { writeServerAuditLog } from "./audit-log.ts";
@@ -118,7 +118,7 @@ async function sha256Hex(content: string) {
 
 function buildReceiptPayload(
   transaction: PropertyTransactionRow,
-  paystackData: PaystackTransactionData,
+  payangelsData: PayAngelsTransactionData,
   receiptId: string,
   receiptNumber: string
 ) {
@@ -128,7 +128,7 @@ function buildReceiptPayload(
     provider: "payangels",
     providerReference: transaction.provider_reference,
     providerTransactionId:
-      transaction.provider_transaction_id || String(paystackData.id || ""),
+      transaction.provider_transaction_id || String(payangelsData.id || ""),
     organizationId: transaction.organization_id,
     listingId: transaction.listing_id,
     propertyId: transaction.property_id,
@@ -138,10 +138,10 @@ function buildReceiptPayload(
     amountMinor: transaction.amount_minor,
     amountFormatted: minorToMajorString(transaction.amount_minor, transaction.currency),
     currency: transaction.currency,
-    paymentChannel: paystackData.channel || transaction.payment_channel,
-    gatewayResponse: paystackData.gateway_response || transaction.gateway_response,
-    customerEmail: paystackData.customer?.email,
-    paidAt: paystackData.paid_at || new Date().toISOString(),
+    paymentChannel: payangelsData.channel || transaction.payment_channel,
+    gatewayResponse: payangelsData.gateway_response || transaction.gateway_response,
+    customerEmail: payangelsData.customer?.email,
+    paidAt: payangelsData.paid_at || new Date().toISOString(),
     generatedAt: new Date().toISOString(),
   };
 }
@@ -533,9 +533,9 @@ async function syncFinancialSideEffects(transaction: PropertyTransactionRow) {
   await createPaymentNotifications(admin, transaction);
 }
 
-export async function reconcilePaystackPayment(input: {
+export async function reconcilePayAngelsPayment(input: {
   reference: string;
-  verifiedTransaction: PaystackTransactionData;
+  verifiedTransaction: PayAngelsTransactionData;
   verifiedByUserId?: string;
   source: "webhook" | "manual_verify";
 }) {
@@ -554,9 +554,9 @@ export async function reconcilePaystackPayment(input: {
     throw new HttpError(404, "Property transaction not found");
   }
 
-  assertPaystackAmountMatch({
+  assertPayAngelsAmountMatch({
     expectedMinor: transaction.amount_minor,
-    paystackAmountMajor: Number(input.verifiedTransaction.amount || 0),
+    providerAmountMinor: Number(input.verifiedTransaction.amount || 0),
     currency: transaction.currency,
   });
 

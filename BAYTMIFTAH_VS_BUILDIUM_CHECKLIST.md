@@ -64,7 +64,7 @@
 | Feature | Buildium | BaytMiftah | Evidence / notes |
 |---------|:--------:|:----------:|------------------|
 | Online rent collection | ✅ | ✅ | Checkout, recurring charges |
-| ACH / card (US) | ✅ | ✅ | PayAngels/Stripe + simulated checkout when keys absent |
+| ACH / card (US) | ✅ | ✅ | PayAngels only; sandbox checkout blocked when not live |
 | Mobile Money (MoMo) | ❌ | ✅ | `momo-payment.service.ts`, MoMo edges |
 | PayAngels / local rails (Ghana) | ❌ | ✅ | PayAngels edge functions |
 | Tenant wallet | ⚠️ | ✅ | `wallet.service.ts`, consumer `/app/payments` |

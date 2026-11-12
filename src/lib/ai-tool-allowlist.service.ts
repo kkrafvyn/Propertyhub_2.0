@@ -1,5 +1,4 @@
 import { supabase } from "./supabase";
-import { aiGovernanceService, canExecuteAiAction } from "./ai-governance.service";
 
 const db = supabase as any;
 
@@ -78,29 +77,11 @@ export const aiToolAllowlistService = {
   },
 
   async assertToolAllowed(organizationId: string, toolName: string, agentName?: string) {
-    const org = await this.getOrgControl(organizationId);
-    if (org && org.globally_enabled === false) {
-      throw new Error("AI is disabled for this organization (global kill switch).");
-    }
-
-    if (agentName) {
-      const controls = await aiGovernanceService.getControls(organizationId);
-      const control = (controls as any[]).find((c) => c.agent_name === agentName);
-      if (control && !canExecuteAiAction({ enabled: control.enabled, dailyActionBudget: control.daily_action_budget, actionCount: 0 })) {
-        throw new Error(`Agent ${agentName} is disabled by governance.`);
-      }
-    }
-
-    const { data: tool } = await db
-      .from("ai_tool_allowlist")
-      .select("enabled")
-      .eq("organization_id", organizationId)
-      .eq("tool_name", toolName)
-      .maybeSingle();
-
-    if (tool && tool.enabled === false) {
-      throw new Error(`AI tool "${toolName}" is not allowlisted for this organization.`);
-    }
+    const { error } = await db.rpc('consume_ai_action', {
+      p_organization: organizationId, p_agent: agentName || toolName,
+      p_tool: toolName, p_request: crypto.randomUUID(),
+    });
+    if (error) throw new Error(error.message || 'AI governance could not be verified.');
     return true;
   },
 };

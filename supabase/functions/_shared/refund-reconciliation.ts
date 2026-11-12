@@ -1,5 +1,5 @@
 import { HttpError } from "./http.ts";
-import type { PaystackRefundData, PaystackRefundWebhookData } from "./payangels.ts";
+import type { PayAngelsRefundData, PayAngelsRefundWebhookData } from "./payangels.ts";
 import { createAdminClient } from "./supabase.ts";
 
 type RefundStatus =
@@ -39,13 +39,13 @@ type PropertyRefundRow = {
   expected_at: string | null;
   processed_at: string | null;
   failed_at: string | null;
-  paystack_response: Record<string, unknown>;
+  provider_response: Record<string, unknown>;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 };
 
-export function normalizePaystackRefundStatus(status?: string | null): RefundStatus {
+export function normalizePayAngelsRefundStatus(status?: string | null): RefundStatus {
   switch ((status || "").trim().toLowerCase().replace(/-/g, "_")) {
     case "processing":
       return "processing";
@@ -86,7 +86,7 @@ function toIsoOrNull(value?: string | null) {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
-function getRefundReference(refund: PaystackRefundData) {
+function getRefundReference(refund: PayAngelsRefundData) {
   if ("refund_reference" in refund && typeof refund.refund_reference === "string") {
     return refund.refund_reference;
   }
@@ -94,7 +94,7 @@ function getRefundReference(refund: PaystackRefundData) {
   return null;
 }
 
-function getTransactionReferenceFromRefund(refund: PaystackRefundData) {
+function getTransactionReferenceFromRefund(refund: PayAngelsRefundData) {
   if (typeof refund.transaction === "object" && refund.transaction) {
     return refund.transaction.reference?.trim() || "";
   }
@@ -251,7 +251,7 @@ export async function recordInitiatedPropertyRefund(input: {
   refundReason: string;
   customerNote?: string | null;
   merchantNote?: string | null;
-  paystackRefund: PaystackRefundData;
+  payangelsRefund: PayAngelsRefundData;
   metadata?: Record<string, unknown>;
 }) {
   const admin = createAdminClient();
@@ -269,14 +269,14 @@ export async function recordInitiatedPropertyRefund(input: {
     throw new HttpError(404, "Property transaction not found");
   }
 
-  const refundAmountMinor = parseMinorAmount(input.paystackRefund.amount) || input.amountMinor;
+  const refundAmountMinor = parseMinorAmount(input.payangelsRefund.amount) || input.amountMinor;
   const remainingAmountMinor = Math.max(
     transaction.amount_minor - (transaction.refunded_amount_minor || 0),
     0
   );
-  const refundStatus = normalizePaystackRefundStatus(input.paystackRefund.status);
+  const refundStatus = normalizePayAngelsRefundStatus(input.payangelsRefund.status);
   const providerRefundId =
-    input.paystackRefund.id !== undefined ? String(input.paystackRefund.id) : null;
+    input.payangelsRefund.id !== undefined ? String(input.payangelsRefund.id) : null;
   const nowIso = new Date().toISOString();
 
   const { data: refund, error: refundError } = await admin
@@ -288,22 +288,22 @@ export async function recordInitiatedPropertyRefund(input: {
       requested_by_user_id: input.requestedByUserId,
       provider: "payangels",
       provider_refund_id: providerRefundId,
-      provider_refund_reference: getRefundReference(input.paystackRefund),
+      provider_refund_reference: getRefundReference(input.payangelsRefund),
       amount_minor: refundAmountMinor,
-      currency: input.paystackRefund.currency || transaction.currency,
+      currency: input.payangelsRefund.currency || transaction.currency,
       refund_type: refundAmountMinor >= remainingAmountMinor ? "full" : "partial",
       status: refundStatus,
       refund_reason: input.refundReason,
-      customer_note: input.customerNote || input.paystackRefund.customer_note || null,
-      merchant_note: input.merchantNote || input.paystackRefund.merchant_note || null,
-      processor: input.paystackRefund.processor || null,
-      expected_at: toIsoOrNull(input.paystackRefund.expected_at),
+      customer_note: input.customerNote || input.payangelsRefund.customer_note || null,
+      merchant_note: input.merchantNote || input.payangelsRefund.merchant_note || null,
+      processor: input.payangelsRefund.processor || null,
+      expected_at: toIsoOrNull(input.payangelsRefund.expected_at),
       processed_at:
         refundStatus === "processed"
-          ? toIsoOrNull(input.paystackRefund.refunded_at) || nowIso
+          ? toIsoOrNull(input.payangelsRefund.refunded_at) || nowIso
           : null,
       failed_at: refundStatus === "failed" ? nowIso : null,
-      paystack_response: input.paystackRefund as Record<string, unknown>,
+      provider_response: input.payangelsRefund as Record<string, unknown>,
       metadata: {
         source: "workspace",
         initiated_at: nowIso,
@@ -318,6 +318,8 @@ export async function recordInitiatedPropertyRefund(input: {
   }
 
   const updatedTransaction = await syncPropertyTransactionRefundState(transaction.id);
+  const {error:releaseError}=await admin.rpc('finish_property_refund_execution',{p_transaction:transaction.id});
+  if(releaseError)throw new HttpError(500,'Refund was recorded but its execution lock needs reconciliation. Do not submit another refund.');
 
   return {
     transaction: updatedTransaction,
@@ -325,9 +327,9 @@ export async function recordInitiatedPropertyRefund(input: {
   };
 }
 
-export async function reconcilePaystackRefundWebhook(input: {
+export async function reconcilePayAngelsRefundWebhook(input: {
   event: string;
-  refund: PaystackRefundWebhookData;
+  refund: PayAngelsRefundWebhookData;
 }) {
   const admin = createAdminClient();
   const reference = input.refund.transaction_reference?.trim();
@@ -361,7 +363,7 @@ export async function reconcilePaystackRefundWebhook(input: {
     providerRefundId,
     providerRefundReference
   );
-  const refundStatus = normalizePaystackRefundStatus(input.refund.status);
+  const refundStatus = normalizePayAngelsRefundStatus(input.refund.status);
   const remainingAmountMinor = Math.max(
     transaction.amount_minor - (transaction.refunded_amount_minor || 0),
     0
@@ -404,8 +406,8 @@ export async function reconcilePaystackRefundWebhook(input: {
         : existingRefund?.processed_at || null,
     failed_at:
       refundStatus === "failed" ? nowIso : existingRefund?.failed_at || null,
-    paystack_response: {
-      ...(existingRefund?.paystack_response || {}),
+    provider_response: {
+      ...(existingRefund?.provider_response || {}),
       webhook_event: input.event,
       webhook_payload: input.refund,
     },
@@ -453,6 +455,6 @@ export async function reconcilePaystackRefundWebhook(input: {
   };
 }
 
-export function extractTransactionReferenceFromRefund(refund: PaystackRefundData) {
+export function extractTransactionReferenceFromRefund(refund: PayAngelsRefundData) {
   return getTransactionReferenceFromRefund(refund);
 }

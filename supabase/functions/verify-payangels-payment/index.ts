@@ -1,5 +1,5 @@
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
-import { reconcilePaystackPayment } from "../_shared/payment-reconciliation.ts";
+import { reconcilePayAngelsPayment } from "../_shared/payment-reconciliation.ts";
 import { verifyPayangelsTransaction } from "../_shared/payangels.ts";
 import { FINANCE_MEMBER_ROLES } from "../_shared/org-auth.ts";
 import { requireAuthenticatedUser, createAdminClient } from "../_shared/supabase.ts";
@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    const { user } = await requireAuthenticatedUser(authHeader);
+    const { user, userClient } = await requireAuthenticatedUser(authHeader);
     const requestBody = await req.json().catch(() => null);
     const reference =
       typeof requestBody?.reference === "string" ? requestBody.reference.trim() : "";
@@ -55,11 +55,12 @@ Deno.serve(async (req) => {
     }
 
     if (!isPayer && !isOrgMember) {
-      throw new HttpError(403, "You are not allowed to verify this payment");
+      const {error}=await userClient.rpc('admin_require_payment_access');
+      if(error)throw new HttpError(403, "You are not allowed to verify this payment");
     }
 
     const verifiedTransaction = await verifyPayangelsTransaction(reference);
-    const result = await reconcilePaystackPayment({
+    const result = await reconcilePayAngelsPayment({
       reference,
       verifiedTransaction,
       verifiedByUserId: user.id,

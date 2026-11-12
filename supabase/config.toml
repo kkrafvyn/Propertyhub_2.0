@@ -21,3 +21,12 @@ verify_jwt = false
 
 [functions.import-data-extract]
 verify_jwt = true
+
+[functions.admin-communication-health]
+verify_jwt = true
+
+[functions.admin-retry-delivery]
+verify_jwt = true
+
+[functions.admin-account-recovery]
+verify_jwt = true

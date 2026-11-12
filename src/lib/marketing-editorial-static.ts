@@ -70,10 +70,10 @@ export const DEFAULT_PLATFORM_SURFACES: MarketingSurfaceCard[] = [
   { group: 'Consumer', label: 'Consumer Android & iOS', detail: 'Native apps for discovery, payments, messaging, and journeys on the go.' },
   { group: 'Workspace', label: 'Workspace web', detail: 'CRM-to-ERP operations: listings, leases, finance, and field workflows.' },
   { group: 'Workspace', label: 'Workspace mobile', detail: 'Android and iOS apps for managers and teams in the field.' },
-  { group: 'Workspace', label: 'Workspace desktop', detail: 'Windows Electron shell for high-volume desk work and My Work–first navigation.' },
+  { group: 'Workspace', label: 'Workspace desktop', detail: 'Windows desktop app for high-volume desk work and My Work–first navigation.' },
   { group: 'Platform', label: 'Platform admin', detail: 'Trust, fraud, revenue, CMS, and feature controls for operators.' },
   { group: 'Platform', label: 'Shared auth & org model', detail: 'One account links consumer journeys and workspace membership where applicable.' },
-  { group: 'Platform', label: 'Unified data layer', detail: 'Supabase-backed records, RLS, and audit history across every surface.' },
+  { group: 'Platform', label: 'Shared records & audit', detail: 'Listings, leases, payments, and work history stay consistent — with a full trail across every surface.' },
 ];
 
 export const DEFAULT_MARKETING_ROLES: MarketingRolePreview[] = [

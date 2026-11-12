@@ -155,11 +155,6 @@ export function getPayangelsPublicKey() {
   return firstEnv("VITE_PAYANGELS_PUBLIC_KEY", "Live_Public_Key");
 }
 
-/** @deprecated Use getPayangelsPublicKey — PayAngels is the sole payment rail */
-export function getPaystackPublicKey() {
-  return getPayangelsPublicKey();
-}
-
 export function getIntegrationSummary(): IntegrationStatus[] {
   return [
     {

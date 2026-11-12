@@ -779,12 +779,11 @@ class AgenticAIOrchestratorService {
     data: any;
   }> {
     if (this.looksLikeUuid(organizationId) && !this.isDemoOrTest()) {
-      const { aiToolAllowlistService } = await import("./ai-tool-allowlist.service");
-      await aiToolAllowlistService.assertToolAllowed(organizationId, `${agent.toLowerCase()}_goal`, agent);
-
       if (agent !== "ExecutiveAgent") {
         throw new Error(`${agent} execution is not connected to a production worker. Use the live operational module for this task.`);
       }
+      const { aiToolAllowlistService } = await import("./ai-tool-allowlist.service");
+      await aiToolAllowlistService.assertToolAllowed(organizationId, `${agent.toLowerCase()}_goal`, agent);
 
       const report = await this.runNightWatchAuditLive(organizationId);
       return {

@@ -1,63 +1,129 @@
-import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
 import { AdminSectionGate } from "./AdminSectionGate";
+import { AdminRecordBrowser } from "./AdminRecordBrowser";
+import { AdminCaseForm } from "./AdminCaseForm";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
 import { Card } from "../../components/ui/Card";
-import { listCommunicationDeliveries } from "../../../lib/platform-admin-dashboard.service";
-
-export function AdminPlatformCommunications() {
-  const [rows, setRows] = useState<Awaited<ReturnType<typeof listCommunicationDeliveries>>>([]);
-  const [loading, setLoading] = useState(true);
+import { adminOperationsService } from "../../../lib/admin-operations.service";
+import { DeliveryRetry } from './DeliveryRetry';
+function CommunicationDiagnostics() {
+  const [organization, setOrganization] = useState("");
+  const [result, setResult] = useState<Awaited<
+    ReturnType<typeof adminOperationsService.communicationHealth>
+  > | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    void listCommunicationDeliveries(100)
-      .then(setRows)
-      .catch((err) => setError(err.message || "Unable to load delivery attempts"))
-      .finally(() => setLoading(false));
-  }, []);
-
+  const pending = useRef(false);
+  return (
+    <Card className="space-y-4 p-5">
+      <h2 className="text-lg font-semibold">WhatsApp connection checks</h2>
+      <p className="text-sm text-muted-foreground">
+        Check webhook configuration and organization credentials. Presence
+        checks cannot confirm Meta approval or token validity.
+      </p>
+      <form
+        className="flex flex-wrap items-end gap-3"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          if (pending.current) return;
+          pending.current = true;
+          setBusy(true);
+          setError("");
+          setResult(null);
+          try {
+            setResult(
+              await adminOperationsService.communicationHealth(organization),
+            );
+          } catch (error) {
+            setError(
+              error instanceof Error
+                ? error.message
+                : "Unable to check connection.",
+            );
+          } finally {
+            pending.current = false;
+            setBusy(false);
+          }
+        }}
+      >
+        <div className="min-w-48 flex-1">
+          <Input
+            label="Organization to diagnose"
+            value={organization}
+            onChange={(event) => {
+              setOrganization(event.target.value);
+              setResult(null);
+            }}
+            placeholder="Organization ID (optional)"
+            disabled={busy}
+          />
+        </div>
+        <Button type="submit" disabled={busy}>
+          {busy ? "Checking…" : "Check connection"}
+        </Button>
+      </form>
+      {error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
+      {result ? (
+        <div role="status" className="space-y-3">
+          {result.checks.map((check) => (
+            <div
+              key={check.name}
+              className="rounded-lg border border-border p-3"
+            >
+              <p className="text-sm font-semibold">
+                {check.ready ? "Configured" : "Needs attention"} · {check.name}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {check.detail}
+              </p>
+            </div>
+          ))}
+          <p className="text-xs text-muted-foreground">
+            Checked {new Date(result.checkedAt).toLocaleString()}
+          </p>
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+export function AdminPlatformCommunications() {
   return (
     <AdminSectionGate section="communications" label="Communications">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-semibold">Communications delivery</h1>
-          <p className="text-muted-foreground mt-2">Recent delivery attempts across the platform.</p>
-        </div>
-        {error ? <p className="text-destructive text-sm">{error}</p> : null}
-        {loading ? (
-          <Card className="p-10 text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto" />
-          </Card>
-        ) : (
-          <Card className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="p-3">When</th>
-                  <th className="p-3">Channel</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3">Error</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id} className="border-b">
-                    <td className="p-3">
-                      {row.attempted_at ? new Date(row.attempted_at).toLocaleString() : "—"}
-                    </td>
-                    <td className="p-3">{row.channel}</td>
-                    <td className="p-3">{row.status}</td>
-                    <td className="p-3 text-muted-foreground">{row.error_message || "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {rows.length === 0 ? (
-              <p className="p-6 text-sm text-muted-foreground">No delivery attempts recorded.</p>
-            ) : null}
-          </Card>
-        )}
-      </div>
+      <AdminRecordBrowser
+        kind="communications"
+        title="Communications delivery"
+        description="Find failed messages across organizations and track retry reviews."
+        organizationFilter
+        statuses={["queued", "sent", "delivered", "failed", "escalated"]}
+        columns={[
+          { key: "attempted_at", label: "When" },
+          { key: "organization_id", label: "Organization" },
+          { key: "channel", label: "Channel" },
+          { key: "status", label: "Status" },
+          { key: "attempt_number", label: "Attempt" },
+          { key: "error_message", label: "Error" },
+        ]}
+        detail={(row,refresh) =>
+          row.status === "failed" ? (
+            <div className="space-y-5"><DeliveryRetry key={`retry-${row.id}`} row={row} onSaved={refresh}/><AdminCaseForm
+              key={row.id}
+              category="delivery_retry"
+              sourceId={row.id}
+            /></div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Retry review is available for failed deliveries.
+            </p>
+          )
+        }
+      >
+        <CommunicationDiagnostics />
+      </AdminRecordBrowser>
     </AdminSectionGate>
   );
 }

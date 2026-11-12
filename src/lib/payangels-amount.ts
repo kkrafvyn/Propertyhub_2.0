@@ -1,6 +1,6 @@
 /** Mirror of supabase/functions/_shared/payment-pricing.ts for client-side tests. */
 
-export function normalizePaystackAmountMinor(rawAmount: number, expectedMinor: number) {
+export function normalizePayAngelsAmountMinor(rawAmount: number, expectedMinor: number) {
   const value = Math.round(Number(rawAmount || 0));
   if (!Number.isFinite(value) || value <= 0) {
     throw new Error("Payment amount is missing from provider response");
@@ -22,12 +22,12 @@ export function normalizePaystackAmountMinor(rawAmount: number, expectedMinor: n
   return value;
 }
 
-export function assertPaystackAmountMatch(input: {
+export function assertPayAngelsAmountMatch(input: {
   expectedMinor: number;
-  paystackAmount: number;
+  providerAmount: number;
 }) {
-  const paystackMinor = normalizePaystackAmountMinor(input.paystackAmount, input.expectedMinor);
-  if (paystackMinor !== input.expectedMinor) {
+  const providerMinor = normalizePayAngelsAmountMinor(input.providerAmount, input.expectedMinor);
+  if (providerMinor !== input.expectedMinor) {
     throw new Error("Payment amount does not match transaction record");
   }
 }

@@ -3098,7 +3098,7 @@ export type Database = {
           merchant_note: string | null
           metadata: Json
           organization_id: string
-          paystack_response: Json
+          provider_response: Json
           processed_at: string | null
           processor: string | null
           property_id: string
@@ -3123,7 +3123,7 @@ export type Database = {
           merchant_note?: string | null
           metadata?: Json
           organization_id: string
-          paystack_response?: Json
+          provider_response?: Json
           processed_at?: string | null
           processor?: string | null
           property_id: string
@@ -3148,7 +3148,7 @@ export type Database = {
           merchant_note?: string | null
           metadata?: Json
           organization_id?: string
-          paystack_response?: Json
+          provider_response?: Json
           processed_at?: string | null
           processor?: string | null
           property_id?: string

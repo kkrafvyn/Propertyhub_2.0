@@ -1236,7 +1236,7 @@ export default {
       "instructions": "Disque este código no telemóvel para pagar via MTN/Vodafone.",
       "mtn": "MTN MoMo",
       "telecel": "Telecel Cash",
-      "paystackHint": "Mobile money payment is confirmed automatically when checkout is configured."
+      "checkoutHint": "Mobile money payment is confirmed automatically when checkout is configured."
     },
     "docusign": {
       "signViaDocusign": "Assinar com DocuSign",

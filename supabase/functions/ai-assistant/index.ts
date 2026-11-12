@@ -1,6 +1,7 @@
 import { getCorsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
 import { requireOrgAiAccess } from "../_shared/org-auth.ts";
+import { reserveAiAction } from '../_shared/ai-budget.ts';
 import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
 import {
   type AiSource,
@@ -112,7 +113,7 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    const { user } = await requireAuthenticatedUser(authHeader);
+    const { user, userClient } = await requireAuthenticatedUser(authHeader);
     await enforceRateLimit({
       bucket: rateLimitKey("ai-assistant", user.id),
       maxHits: 20,
@@ -156,6 +157,10 @@ Deno.serve(async (req) => {
       await requireOrgAiAccess(admin, user.id, organizationId, action);
     }
 
+    if (organizationId) {
+      await requireOrgAiAccess(createAdminClient(), user.id, organizationId, action);
+      await reserveAiAction(userClient,organizationId,'Assistant',action);
+    }
     let answer: string | null = null;
     let source: AiSource = "local";
 

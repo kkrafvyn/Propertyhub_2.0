@@ -1,64 +1,34 @@
-import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { AdminSectionGate } from "./AdminSectionGate";
-import { Card } from "../../components/ui/Card";
-import { listPlatformPayments } from "../../../lib/platform-admin-dashboard.service";
-
+import { AdminRecordBrowser } from "./AdminRecordBrowser";
+import { AdminCaseForm } from "./AdminCaseForm";
+import { PropertyPaymentActions } from './PropertyPaymentActions';
 export function AdminPlatformPayments() {
-  const [rows, setRows] = useState<Awaited<ReturnType<typeof listPlatformPayments>>>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    void listPlatformPayments(100)
-      .then(setRows)
-      .catch((err) => setError(err.message || "Unable to load payments"))
-      .finally(() => setLoading(false));
-  }, []);
-
   return (
     <AdminSectionGate section="payments" label="Payments ledger">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-semibold">Payments ledger</h1>
-          <p className="text-muted-foreground mt-2">Cross-tenant payment transactions (read-only).</p>
-        </div>
-        {error ? <p className="text-destructive text-sm">{error}</p> : null}
-        {loading ? (
-          <Card className="p-10 text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto" />
-          </Card>
-        ) : (
-          <Card className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="p-3">When</th>
-                  <th className="p-3">Amount</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3">Provider</th>
-                  <th className="p-3">Reference</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id} className="border-b">
-                    <td className="p-3">{row.created_at ? new Date(row.created_at).toLocaleString() : "—"}</td>
-                    <td className="p-3">
-                      {row.currency} {Number(row.amount).toFixed(2)}
-                    </td>
-                    <td className="p-3">{row.status}</td>
-                    <td className="p-3">{row.payment_provider}</td>
-                    <td className="p-3 font-mono text-xs">{row.external_transaction_id || "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {rows.length === 0 ? (
-              <p className="p-6 text-sm text-muted-foreground">No payment transactions recorded.</p>
-            ) : null}
-          </Card>
+      <div className="space-y-10"><AdminRecordBrowser kind="propertyPayments" title="Property payments" description="Inspect property payments, reconcile provider status, review refunds, or open follow-up." organizationFilter statuses={['initialized','pending','processing','success','failed','abandoned','reversal_pending','reversed']} columns={[{key:'created_at',label:'When'},{key:'organization_id',label:'Organization'},{key:'payer_user_id',label:'Payer'},{key:'amount_minor',label:'Amount',render:row=>`${String(row.currency)} ${(Number(row.amount_minor)/100).toFixed(2)}`},{key:'currency',label:'Currency'},{key:'status',label:'Status'},{key:'provider_reference',label:'Reference'}]} detail={(row,refresh)=><div className="space-y-5"><PropertyPaymentActions key={row.id} row={row} onSaved={refresh}/><AdminCaseForm category="payment_review" sourceId={row.id} sourceLedger="property"/></div>}/>
+      <AdminRecordBrowser
+        kind="payments"
+        title="Payments ledger"
+        description="Search the ledger, inspect payment history, and open reconciliation or dispute follow-up."
+        statuses={["pending", "completed", "failed", "refunded"]}
+        columns={[
+          { key: "created_at", label: "When" },
+          { key: "user_id", label: "Account" },
+          { key: "amount", label: "Amount" },
+          { key: "currency", label: "Currency" },
+          { key: "status", label: "Status" },
+          { key: "payment_provider", label: "Provider" },
+          { key: "external_transaction_id", label: "Reference" },
+        ]}
+        detail={(row) => (
+          <AdminCaseForm
+            key={row.id}
+            category="payment_review"
+            sourceId={row.id}
+            accountId={String(row.user_id || "")}
+          />
         )}
+      />
       </div>
     </AdminSectionGate>
   );
