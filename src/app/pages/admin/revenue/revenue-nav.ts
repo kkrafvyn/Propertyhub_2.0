@@ -5,6 +5,7 @@ import {
   CreditCard,
   Landmark,
   LayoutDashboard,
+  ListChecks,
   Percent,
   Receipt,
   ShieldCheck,
@@ -15,6 +16,7 @@ import {
 
 export type RevenueSection =
   | "dashboard"
+  | "catalog"
   | "platform-pricing"
   | "listing-fees"
   | "agency-plans"
@@ -37,6 +39,12 @@ export const REVENUE_NAV: Array<{
   category?: string;
 }> = [
   { id: "dashboard", label: "Dashboard", href: "/admin/revenue", icon: LayoutDashboard },
+  {
+    id: "catalog",
+    label: "Revenue Catalog (streams & prices)",
+    href: "/admin/revenue/catalog",
+    icon: ListChecks,
+  },
   {
     id: "platform-pricing",
     label: "Platform Pricing",

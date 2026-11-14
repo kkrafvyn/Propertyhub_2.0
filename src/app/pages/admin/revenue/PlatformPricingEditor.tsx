@@ -378,6 +378,9 @@ export function PlatformPricingEditor() {
           Transaction Fees (fallback only).
         </p>
         <div className="flex flex-wrap gap-2">
+          <Link to="/admin/revenue/catalog">
+            <Button variant="outline">Revenue Catalog</Button>
+          </Link>
           <Link to="/admin/revenue/booking-fees">
             <Button variant="outline">Booking Fees</Button>
           </Link>

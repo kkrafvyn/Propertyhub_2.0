@@ -8,11 +8,14 @@ import { PromoCodesEditor } from "./PromoCodesEditor";
 import { PaymentGatewaysEditor } from "./PaymentGatewaysEditor";
 import { TaxesSettingsEditor } from "./TaxesSettingsEditor";
 import { PlatformPricingEditor } from "./PlatformPricingEditor";
+import { RevenueCatalogEditor } from "./RevenueCatalogEditor";
 
 function renderSection(section: ReturnType<typeof resolveRevenueSection>) {
   switch (section) {
     case "dashboard":
       return <RevenueDashboard />;
+    case "catalog":
+      return <RevenueCatalogEditor />;
     case "platform-pricing":
       return <PlatformPricingEditor />;
     case "listing-fees":
