@@ -377,9 +377,9 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
           <p className="text-xs text-muted-foreground">{confirmedDisbursements.length} confirmed deliveries</p>
         </Card>
         <Card className="app-surface-card p-4 space-y-1">
-          <p className="text-xs text-muted-foreground">GRA Rent Withholding</p>
-          <p className="text-2xl font-bold font-mono">8.0%</p>
-          <p className="text-xs text-muted-foreground">Standard statutory rate</p>
+          <p className="text-xs text-muted-foreground">Withholding review</p>
+          <p className="text-lg font-semibold text-ink">Tax review required</p>
+          <p className="text-xs text-muted-foreground">Confirm the applicable rate and deductions per statement before approval.</p>
         </Card>
         <Card className="app-surface-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground">Supported payout routes</p>
