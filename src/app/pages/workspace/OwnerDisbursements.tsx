@@ -304,7 +304,8 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
   const pending = useMemo(() => statements.filter((s) => s.payoutStatus === "pending_approval"), [statements]);
   const history = useMemo(() => statements.filter((s) => s.payoutStatus !== "pending_approval"), [statements]);
   const totalPendingPayout = pending.reduce((sum, s) => sum + s.netDisbursableGhs, 0);
-  const totalDisbursed = history.reduce((sum, s) => sum + s.netDisbursableGhs, 0);
+  const confirmedDisbursements = history.filter((s) => s.payoutStatus === "disbursed_bank" || s.payoutStatus === "disbursed_momo");
+  const totalDisbursed = confirmedDisbursements.reduce((sum, s) => sum + s.netDisbursableGhs, 0);
 
   const filteredPending = useMemo(() =>
     pending.filter((s) => !search || s.ownerName.toLowerCase().includes(search.toLowerCase())),
@@ -338,7 +339,7 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
     <WorkspacePageShell
       tone="finance"
       title="Owner Payouts & Rent Waterfall"
-      description="Execute net rental income payouts via Bank Wire or Mobile Money."
+      description="Review owner statements, request payout approval, and track confirmed disbursements."
       badge={
         <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
           <Banknote className="h-3.5 w-3.5" aria-hidden="true" />
@@ -373,7 +374,7 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
         <Card className="app-surface-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground">Total Disbursed</p>
           <p className="text-2xl font-bold font-mono text-emerald-600">{money(totalDisbursed)}</p>
-          <p className="text-xs text-muted-foreground">{history.length} completed</p>
+          <p className="text-xs text-muted-foreground">{confirmedDisbursements.length} confirmed deliveries</p>
         </Card>
         <Card className="app-surface-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground">GRA Rent Withholding</p>
@@ -381,7 +382,7 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
           <p className="text-xs text-muted-foreground">Standard statutory rate</p>
         </Card>
         <Card className="app-surface-card p-4 space-y-1">
-          <p className="text-xs text-muted-foreground">Active Channels</p>
+          <p className="text-xs text-muted-foreground">Supported payout routes</p>
           <div className="flex flex-col gap-1 mt-1">
             <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
               <Smartphone className="w-3 h-3" /> MTN MoMo / Telecel
@@ -394,7 +395,7 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
       </div>
 
       {/* ── Tabs ── */}
-      <div className="flex gap-1 p-1 bg-muted/50 rounded-xl w-fit" role="tablist" aria-label="Disbursement views">
+      <div className="flex gap-1 p-1 bg-muted/50 rounded-xl max-w-full overflow-x-auto" role="tablist" aria-label="Disbursement views">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -402,7 +403,7 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
             role="tab"
             aria-selected={tab === t.key}
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+            className={`flex shrink-0 items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
               ${tab === t.key ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >
             {t.icon} {t.label}
