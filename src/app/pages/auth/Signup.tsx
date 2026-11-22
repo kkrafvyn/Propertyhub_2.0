@@ -42,6 +42,12 @@ export function Signup() {
   const legalScope: LegalAcceptanceScope =
     accountType === "landlord" ? "signup_host" : "signup_consumer";
 
+  // A consumer's acceptance must not silently apply to landlord/agency terms
+  // when switching the account-purpose selector on the same route.
+  useEffect(() => {
+    setTermsAccepted(false);
+  }, [legalScope]);
+
   useEffect(() => {
     if (user) {
       setOauthLoadingProvider(null);
