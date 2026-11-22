@@ -22,7 +22,7 @@ import {
   KeyRound,
   Wrench,
   ShieldCheck,
-  CheckCheck,
+  Check,
   ChevronLeft,
   MessageCircle,
   HelpCircle,
@@ -48,6 +48,7 @@ function ResidentInboxContent() {
 
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,6 +61,7 @@ function ResidentInboxContent() {
 
     const text = inputText.trim();
     setInputText("");
+    setSendError(null);
     broadcastTypingStatus(false);
     setIsSending(true);
 
@@ -67,6 +69,8 @@ function ResidentInboxContent() {
       await sendMessage(text);
     } catch (err) {
       console.error("Failed to send message:", err);
+      setInputText((current) => current.trim() ? current : text);
+      setSendError("Message not sent. Your draft is restored — try again.");
     } finally {
       setIsSending(false);
     }
@@ -110,18 +114,18 @@ function ResidentInboxContent() {
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 text-xs font-semibold border border-violet-500/20 shadow-xs">
                 <Sparkles className="w-3.5 h-3.5" />
-                24/7 Autonomous Concierge Active
+                Property messaging
               </span>
               <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Real-time Connected
+                Conversation updates
               </span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-serif font-bold tracking-tight text-ink font-display">
               Resident Portal & Operations Desk
             </h1>
             <p className="mt-1.5 text-sm text-ink-secondary max-w-2xl leading-relaxed">
-              Direct connection to your estate manager, maintenance dispatch, and AI operations. Request repairs, ask lease questions, or request gate clearances seamlessly.
+              Message your property team about inquiries, repairs or lease questions. Automated support is available only where configured.
             </p>
           </div>
         </div>
@@ -212,7 +216,7 @@ function ResidentInboxContent() {
                     <div>
                       <h3 className="text-sm font-semibold text-ink">Describe any operational request</h3>
                       <p className="text-xs text-ink-muted mt-1 max-w-sm mx-auto leading-relaxed">
-                        Our autonomous engine automatically detects maintenance urgency, dispatches work orders, and answers lease questions.
+                        Describe your request clearly so the property team can review it. Automated assistance may help where enabled.
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2 justify-center max-w-lg mx-auto pt-2">
@@ -270,7 +274,7 @@ function ResidentInboxContent() {
                             <span>
                               {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                             </span>
-                            {isMe && <CheckCheck className="w-3 h-3 text-white" />}
+                            {isMe && <><Check aria-hidden="true" className="w-3 h-3 text-white" /><span className="sr-only">Message saved</span></>}
                           </div>
                         </div>
                       </div>
@@ -291,10 +295,13 @@ function ResidentInboxContent() {
               </div>
 
               {/* ── Input bar ── */}
+              {sendError && <p role="alert" className="px-4 py-2 text-sm text-destructive">{sendError}</p>}
               <form onSubmit={handleSend} className="p-3.5 border-t border-surface-border/80 bg-surface/90 backdrop-blur-xs flex items-center gap-3">
                 <input
                   type="text"
+                  aria-label="Message to property team"
                   placeholder="Describe an issue, request a repair, ask about lease terms..."
+                  maxLength={4000}
                   value={inputText}
                   onChange={(e) => {
                     setInputText(e.target.value);
