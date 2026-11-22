@@ -145,18 +145,16 @@ export class RealtimeMessagingService {
     try {
       const channel = supabase.channel(channelName, {
         config: {
+          // Realtime Authorization must be enforced by realtime.messages RLS.
+          private: true,
           broadcast: { self: false },
           presence: { key: conversationId },
         },
       });
 
       channel
-        // Ephemeral broadcast: new message
-        .on("broadcast", { event: "NEW_MESSAGE" }, (payload) => {
-          if (callbacks.onMessage && payload.payload) {
-            callbacks.onMessage(payload.payload as Message);
-          }
-        })
+        // Durable messages are delivered only from Postgres Changes (RLS enforced).
+        // Never accept client-originated broadcasts as authoritative messages.
         // Ephemeral broadcast: typing status
         .on("broadcast", { event: "TYPING_STATUS" }, (payload) => {
           if (callbacks.onTyping && payload.payload) {
@@ -175,7 +173,7 @@ export class RealtimeMessagingService {
             callbacks.onDeliveryStatus(payload.payload as any);
           }
         })
-        // Postgres change fallback
+        // Authoritative Postgres message events, checked against messages RLS
         .on(
           "postgres_changes",
           {
@@ -441,16 +439,9 @@ export class RealtimeMessagingService {
       }
     }
 
-    // 2. Realtime Broadcast to connected clients (Sub-50ms)
-    const channel = this.activeChannels.get(input.conversationId);
-    if (channel) {
-      void channel.send({
-        type: "broadcast",
-        event: "NEW_MESSAGE",
-        payload: resultMessage,
-      });
-    }
-
+    // The caller receives the saved row immediately. Other participants receive
+    // it through Postgres Changes with row-level authorization, not a forgeable
+    // client Broadcast event.
     return resultMessage;
   }
 
