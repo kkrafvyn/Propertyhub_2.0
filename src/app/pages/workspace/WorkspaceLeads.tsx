@@ -235,6 +235,7 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
   const [activeTab, setActiveTab] = useState("pipeline");
   const [messages, setMessages] = useState<any[]>([]);
   const [reply, setReply] = useState("");
+  const [inboxSearch, setInboxSearch] = useState("");
   const [sending, setSending] = useState(false);
   const [openingConversationForLeadId, setOpeningConversationForLeadId] = useState<string | null>(
     null
@@ -1457,13 +1458,32 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
                 </p>
               </div>
 
+              <label htmlFor="workspace-inbox-search" className="mb-2 block text-xs font-semibold text-muted-foreground">Search conversations</label>
+              <input
+                id="workspace-inbox-search"
+                type="search"
+                value={inboxSearch}
+                onChange={(event) => setInboxSearch(event.target.value)}
+                placeholder="Prospect, title or email"
+                className="mb-4 min-h-11 w-full rounded-lg border border-surface-border bg-surface px-3 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              />
               {sharedConversations.length === 0 ? (
                 <div className="text-muted-foreground text-sm py-8 text-center">
                   No shared conversations yet.
                 </div>
+              ) : !sharedConversations.some((entry) => {
+                const prospect = leadProfiles[entry.lead_user_id];
+                return [prospect?.full_name, prospect?.email, entry.conversation?.title]
+                  .some((value) => String(value || "").toLowerCase().includes(inboxSearch.trim().toLowerCase()));
+              }) ? (
+                <div role="status" className="text-muted-foreground text-sm py-8 text-center">No matching conversations. Try another name or clear the search.</div>
               ) : (
                 <div className="space-y-3">
-                  {sharedConversations.map((sharedConversation) => {
+                  {sharedConversations.filter((entry) => {
+                    const prospect = leadProfiles[entry.lead_user_id];
+                    return [prospect?.full_name, prospect?.email, entry.conversation?.title]
+                      .some((value) => String(value || "").toLowerCase().includes(inboxSearch.trim().toLowerCase()));
+                  }).map((sharedConversation) => {
                     const conversation = sharedConversation.conversation;
                     const prospect = leadProfiles[sharedConversation.lead_user_id];
                     const latestMessage =
@@ -1481,6 +1501,7 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
                         key={sharedConversation.id}
                         type="button"
                         onClick={() => handleSelectConversation(sharedConversation)}
+                        aria-pressed={selectedConversationId === sharedConversation.conversation_id}
                         className={`w-full rounded-lg p-4 text-left transition-colors ${
                           selectedConversationId === sharedConversation.conversation_id
                             ? "border border-primary/20 bg-primary/10"
