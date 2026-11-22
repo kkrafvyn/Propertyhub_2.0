@@ -35,6 +35,7 @@ describe('live owner disbursement boundary', () => {
     expect(mapOwnerStatementRun({ ...sample, status: 'approved' }).payoutStatus).toBe('pending_approval');
     expect(mapOwnerStatementRun({ ...sample, status: 'processing' }).payoutStatus).toBe('pending_approval');
     expect(mapOwnerStatementRun({ ...sample, status: 'failed' }).payoutStatus).toBe('on_hold');
-    expect(mapOwnerStatementRun({ ...sample, status: 'delivered' }).payoutStatus).toBe('disbursed_bank');
+    expect(mapOwnerStatementRun({ ...sample, status: 'delivered' }).payoutStatus).toBe('pending_approval');
+    expect(mapOwnerStatementRun({ ...sample, status: 'delivered', payout_reference: 'payout-ref-123' }).payoutStatus).toBe('disbursed_bank');
   });
 });
