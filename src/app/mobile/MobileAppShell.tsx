@@ -20,6 +20,7 @@ import {
   filterHomeListings,
 } from "../components/baytmiftah/mobile/MobileHomeSections";
 import { exploreModeUrl } from "../lib/consumer-routes";
+import { MobileBookingQuickFilters } from "../components/baytmiftah/mobile/MobileBookingQuickFilters";
 import { mapListingToCard } from "../components/baytmiftah";
 import MobileHomeMenu from "../components/baytmiftah/mobile/MobileHomeMenu";
 import { useTranslation } from "../i18n/LocaleContext";
@@ -205,10 +206,13 @@ export function MobileAppShell() {
         </form>
         <MobileTransactionTabs active={txTab} onChange={setTxTab} />
         <MobilePropertyTypeRow active={propType} onChange={setPropType} />
+        <MobileBookingQuickFilters searchBaseUrl={seeAllTo} />
         <div className="mb-3 flex items-center justify-between gap-3 px-4">
-          <span className="text-xs text-ink-secondary">Prices in {market?.currency ?? "GHS"}</span>
+          <span className="text-xs text-ink-secondary">Listed prices in {market?.currency ?? "GHS"}</span>
           <Link to={seeAllTo} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-surface-border px-3 text-sm font-semibold text-ink"><SlidersHorizontal className="h-4 w-4" /> Search & filters</Link>
         </div>
+
+        <p className="mb-4 px-4 text-xs leading-relaxed text-ink-muted">Check full costs, availability and viewing options on each listing before making a payment.</p>
 
         {usingOfflineCache ? (
           <p className="px-4 text-sm text-muted-foreground">{t("mobile.appShell.offlineCache")}</p>
