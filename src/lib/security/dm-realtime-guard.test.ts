@@ -1,13 +1,14 @@
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const service = readFileSync(new URL("../realtime-messaging.service.ts", import.meta.url), "utf8");
+const service = readFileSync(resolve(process.cwd(), "src/lib/realtime-messaging.service.ts"), "utf8");
 const topicPolicy = readFileSync(
-  new URL("../../../supabase/migrations/20261122190000_private_conversation_realtime.sql", import.meta.url),
+  resolve(process.cwd(), "supabase/migrations/20261122190000_private_conversation_realtime.sql"),
   "utf8",
 );
 const messageGuard = readFileSync(
-  new URL("../../../supabase/migrations/20261122191000_guard_message_identity.sql", import.meta.url),
+  resolve(process.cwd(), "supabase/migrations/20261122191000_guard_message_identity.sql"),
   "utf8",
 );
 
