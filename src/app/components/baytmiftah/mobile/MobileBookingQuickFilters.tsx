@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { ArrowDownWideNarrow, BedDouble, Map, ShieldCheck } from "lucide-react";
+import { ArrowDownWideNarrow, BedDouble, Map, ShieldCheck, type LucideIcon } from "lucide-react";
 
 /**
  * Keep the existing transaction/property filters when adding a quick filter.
@@ -14,7 +14,7 @@ export function mobileBookingFilterUrl(baseUrl: string, updates: Record<string, 
 }
 
 export function MobileBookingQuickFilters({ searchBaseUrl }: { searchBaseUrl: string }) {
-  const options = [
+  const options: Array<{ label: string; values: Record<string, string>; icon: LucideIcon }> = [
     { label: "2+ bedrooms", values: { bedrooms: "2" }, icon: BedDouble },
     { label: "Verified organizations", values: { verified: "1" }, icon: ShieldCheck },
     { label: "Lowest price", values: { sort: "price_asc" }, icon: ArrowDownWideNarrow },
