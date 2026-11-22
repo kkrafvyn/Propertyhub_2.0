@@ -141,7 +141,7 @@ export function RealtimeMessagingProvider({
       });
 
       // Update local state immediately
-      setMessages((prev) => [...prev, sent]);
+      setMessages((prev) => prev.some((message) => message.id === sent.id) ? prev : [...prev, sent]);
 
       // 2. Trigger Autonomous AI Intent Engine if enabled
       if (enableAiAgent) {
