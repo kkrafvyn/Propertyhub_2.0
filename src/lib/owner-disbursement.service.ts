@@ -58,7 +58,7 @@ export function mapOwnerStatementRun(row: any, ownerName = 'Owner'): OwnerStatem
   const net = Number(row.net_distributable_minor || 0) / 100;
   // Only provider-confirmed deliveries are paid. A generated, approved or
   // processing statement is not evidence of a successful disbursement.
-  const status: OwnerStatementRecord['payoutStatus'] = row.status === 'delivered'
+  const status: OwnerStatementRecord['payoutStatus'] = row.status === 'delivered' && Boolean(row.payout_reference)
     ? 'disbursed_bank'
     : row.status === 'failed' || row.status === 'rejected'
       ? 'on_hold'
