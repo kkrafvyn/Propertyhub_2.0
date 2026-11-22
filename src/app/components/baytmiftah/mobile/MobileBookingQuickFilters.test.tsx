@@ -17,7 +17,7 @@ describe("Mobile booking quick filters", () => {
         <MobileBookingQuickFilters searchBaseUrl="/search?listingType=short_stay" />
       </MemoryRouter>,
     );
-    expect(screen.getByRole("link", { name: "Verified agencies" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Verified organizations" })).toHaveAttribute(
       "href",
       "/search?listingType=short_stay&verified=1",
     );
