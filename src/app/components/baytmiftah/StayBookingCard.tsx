@@ -134,6 +134,15 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
     setMessage('')
 
     try {
+      // Record the accepted terms before reserving. Otherwise a failure in
+      // the separate acceptance write can report an already-created booking
+      // as failed and cause accidental duplicate retry attempts.
+      await legalAcceptanceService.recordAcceptance({
+        userId: user.id,
+        scope: 'short_stay_booking',
+        policySlugs: ACCEPTANCE_SCOPES.short_stay_booking.policySlugs,
+        policyVersion: LEGAL_POLICY_VERSION,
+      })
       const result = await createReservation({
         listingId: listing.id,
         checkIn,
@@ -141,19 +150,11 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
         guests,
         bookingMode,
       })
-      if (!result?.ok && !result?.reservation) {
-        throw new Error((result as { error?: string })?.error || 'Could not create reservation')
+      if (!result?.ok || !result.reservation?.id) {
+        throw new Error('Could not create reservation')
       }
       const reservation = result.reservation
-      const reservationId = reservation?.id ?? result.id
-      if (user?.id) {
-        await legalAcceptanceService.recordAcceptance({
-          userId: user.id,
-          scope: 'short_stay_booking',
-          policySlugs: ACCEPTANCE_SCOPES.short_stay_booking.policySlugs,
-          policyVersion: LEGAL_POLICY_VERSION,
-        })
-      }
+      const reservationId = reservation.id
 
       clearJourneyDraft(listing.id, 'booking', user?.id)
 
