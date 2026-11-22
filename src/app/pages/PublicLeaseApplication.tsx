@@ -204,7 +204,7 @@ export function PublicLeaseApplication() {
               Apply for Residential Lease
             </h1>
             <p className="text-xs sm:text-sm text-ink-secondary max-w-xl leading-relaxed">
-              Submit your tenancy credentials for expedited property review. All data is end-to-end encrypted and held in escrow compliance.
+              Submit your tenancy details for review by the relevant property team. Review the privacy notice before sharing personal information.
             </p>
           </div>
         </div>
@@ -350,7 +350,7 @@ export function PublicLeaseApplication() {
 
             <div className="flex items-center justify-center gap-2 text-[11px] text-ink-muted">
               <Lock className="w-3.5 h-3.5" />
-              <span>Protected by Bank-Grade 256-Bit SSL Escrow Protocol</span>
+              <span>Your application will be submitted to the property team for review. No payment is collected here.</span>
             </div>
           </form>
         </Card>
