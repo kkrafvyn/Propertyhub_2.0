@@ -241,7 +241,8 @@ export function MobileHomeListingCard({
   const { t } = useTranslation();
   const displayBadge =
     badge ??
-    (listing.verified ? { label: t("mobile.appShell.verified"), tone: "green" } : undefined);
+    (listing.verified ? { label: "Organization verified", tone: "green" } : undefined);
+  const transactionLabel = { rent: "For rent", sale: "For sale", lease: "For lease", stay: "Short stay" }[listing.listingType];
 
   return (
     <div className="relative w-[min(260px,78vw)] shrink-0 snap-start">
@@ -250,7 +251,14 @@ export function MobileHomeListingCard({
         className="marketplace-property-card block overflow-hidden"
       >
         <div className="relative aspect-[4/3]">
-          <ListingCardImage listing={listing} className="h-full w-full" />
+          {listing.photos.length > 0 ? (
+            <ListingCardImage listing={listing} className="h-full w-full" />
+          ) : (
+            <div role="img" aria-label="Property photograph unavailable" className="flex h-full items-center justify-center bg-surface-subtle text-xs text-ink-muted">
+              Photograph not available
+            </div>
+          )}
+          <span className="absolute bottom-3 left-3 rounded-full bg-surface/95 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-sm">{transactionLabel}</span>
           {displayBadge && (
             <span
               className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white ${
@@ -266,6 +274,10 @@ export function MobileHomeListingCard({
           <p className="mt-2 truncate font-semibold text-ink">{listing.title}</p>
           <p className="mt-1 truncate text-xs text-ink-secondary">{listing.location}</p>
           <p className="mt-2 text-xs text-ink-muted">{listing.bedrooms ? `${listing.bedrooms} beds · ` : ""}{listing.type}</p>
+          <span className="mt-3 inline-flex min-h-9 w-full items-center justify-between gap-2 border-t border-surface-border pt-3 text-xs font-semibold text-mobile-forest">
+            View details &amp; enquire
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </span>
         </div>
       </Link>
       {onToggleSave && (
