@@ -44,6 +44,20 @@ Compared refs: `main` and `feat/mobile-booking-ux-dm-hardening-20261122` (draft 
 | P2 | Automation states and online labels appear in older marketing/workspace surfaces | Spot-check all modules for misleading claims |
 | P2 | Native screenshots, offline behaviour, accessible focus/contrast and screen-reader navigation | Device/browser acceptance testing required |
 
+## Continuation: cross-surface integrity and trust fixes
+
+- **Signup account type:** switching customer / landlord registration clears previous terms acceptance; avoid recording the wrong legal scope.
+- **Lease application and owner portal:** removed unsupported end-to-end encryption, BaytMiftah escrow custody, double-entry verification and tax-guarantee copy. No claim is made about actual provider custody without evidence.
+- **Public property explorer:** replaced the misleading "owner data escrow protected" label.
+- **Workspace payments:** recorded deposit holds are distinguished from externally confirmed custody; staff are directed to verify provider settlement.
+- **AI assistant:** escrow/payment FAQ now states BaytMiftah is non-custodial and the external provider controls payment terms.
+- **Owner payout tax card:** removed a fixed universal 8% statutory claim; tax requires contextual review and reconciliation.
+- **Finance KPIs:** dashboard aggregates by currency; a mixed USD/GHS pipeline displays separate amounts instead of a fabricated GHS sum. Won/lost deals are excluded from the open pipeline total. Recent listing labels now distinguish monthly rentals and nightly stays from outright sales.
+- **Regression tests:** added `marketplace-payment-claims.test.ts` and `currency-summary.test.ts` to discourage misleading financial language and accidental mixed-currency calculations.
+- **Existing participant RLS:** migration `2026092711_new_security_findings.sql` already removes the early open participant-insert policy. Validate installed migration history before reporting it as a live vulnerability.
+
+**Newly visible backend follow-up:** `src/lib/message.service.ts` and `src/lib/realtime-messaging.service.ts` use separate message delivery paths. Cross-path consistency, blocked-user enforcement, and repeated-send throttling remain production integration work. The database's dated exclusion constraint guards overlapping short-stay reservations, but idempotency for retrying reservation submissions still requires confirmation.
+
 ## Verification status
 - Previous PR #42 CI: build and typecheck succeeded, 3 test files had failures (2 failing tests + 1 test import suite), plus a critical `certifi` scan. Specific source-level fixes were committed after that run.
 - Tests were added for booking calendar days and payout state classification.
