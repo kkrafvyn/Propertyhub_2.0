@@ -29,6 +29,7 @@ import {
   LineChart,
   Cpu,
   ShoppingBag,
+  RefreshCw,
 } from "lucide-react";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -409,7 +410,7 @@ export function WorkspaceDashboard({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 sm:p-4 rounded-2xl bg-surface-subtle/80 border border-surface-border backdrop-blur-sm">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-xs font-semibold text-ink-muted uppercase tracking-wide whitespace-nowrap">
-            Viewing As:
+            Dashboard preview:
           </span>
           <div className="flex flex-wrap gap-1.5">
             {roleConfig.map((r) => {
@@ -436,9 +437,20 @@ export function WorkspaceDashboard({
             })}
           </div>
         </div>
-        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-secondary bg-secondary border border-surface-border px-2.5 py-1 rounded-full self-start sm:self-auto shrink-0">
-          Live updates
-        </span>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <span className="text-xs text-ink-muted">Loaded on refresh</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={loading}
+            onClick={() => setRefreshToken((value) => value + 1)}
+            aria-label="Refresh workspace metrics"
+          >
+            <RefreshCw aria-hidden="true" className={`mr-1.5 h-4 w-4 ${loading ? "motion-safe:animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {loadError ? (
