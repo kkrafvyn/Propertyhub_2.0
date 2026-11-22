@@ -1,12 +1,10 @@
 import { supabase } from "./supabase";
 import { buildCheckoutPath } from "../app/lib/checkout-navigation";
 import { notificationService } from "./notification.service";
+import { stayNights } from "../app/lib/baytmiftah/stay-date-rules";
 
 function countNights(checkIn: string, checkOut: string) {
-  const start = new Date(`${checkIn}T00:00:00`);
-  const end = new Date(`${checkOut}T00:00:00`);
-  const diff = end.getTime() - start.getTime();
-  return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)));
+  return stayNights(checkIn, checkOut);
 }
 
 export type BookingProgress = {
@@ -254,6 +252,9 @@ export const bookingService = {
     guestNote?: string;
     bookingMode?: "instant" | "request";
   }) {
+    if (stayNights(input.checkIn, input.checkOut) < 1) {
+      throw new Error("Check-out must be after check-in.");
+    }
     await this.validateDatesAvailable(input.listingId, input.checkIn, input.checkOut);
 
     const { data, error } = await supabase.rpc("create_short_stay_booking", {
