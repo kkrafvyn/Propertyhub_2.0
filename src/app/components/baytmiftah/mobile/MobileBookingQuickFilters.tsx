@@ -16,7 +16,7 @@ export function mobileBookingFilterUrl(baseUrl: string, updates: Record<string, 
 export function MobileBookingQuickFilters({ searchBaseUrl }: { searchBaseUrl: string }) {
   const options = [
     { label: "2+ bedrooms", values: { bedrooms: "2" }, icon: BedDouble },
-    { label: "Verified agencies", values: { verified: "1" }, icon: ShieldCheck },
+    { label: "Verified organizations", values: { verified: "1" }, icon: ShieldCheck },
     { label: "Lowest price", values: { sort: "price_asc" }, icon: ArrowDownWideNarrow },
     { label: "Explore map", values: { view: "map" }, icon: Map },
   ];
