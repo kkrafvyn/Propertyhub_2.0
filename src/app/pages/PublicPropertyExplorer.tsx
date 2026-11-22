@@ -214,7 +214,7 @@ export function PublicPropertyExplorer() {
                       valueCls: isVerified ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400",
                     },
                     { icon: Eye, label: "Public visibility", value: "Limited Privacy", valueCls: "text-ink" },
-                    { icon: Lock, label: "Owner data", value: "Escrow Protected", valueCls: "text-ink" },
+                    { icon: Lock, label: "Owner data", value: "Limited disclosure", valueCls: "text-ink" },
                   ].map(({ icon: Icon, label, value, valueCls }) => (
                     <div
                       key={label}
