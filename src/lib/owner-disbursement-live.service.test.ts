@@ -22,4 +22,19 @@ describe('live owner disbursement boundary', () => {
     expect(mapped.netDisbursableGhs).toBe(25500);
     expect(mapped.payoutStatus).toBe('pending_approval');
   });
+  it('never counts an approved, processing or failed statement as disbursed', () => {
+    const sample = {
+      id: 'stmt-2',
+      owner_user_id: 'owner-2',
+      period_start: '2026-09-01',
+      period_end: '2026-09-30',
+      gross_collections_minor: 150000,
+      expense_minor: 20000,
+      net_distributable_minor: 130000,
+    };
+    expect(mapOwnerStatementRun({ ...sample, status: 'approved' }).payoutStatus).toBe('pending_approval');
+    expect(mapOwnerStatementRun({ ...sample, status: 'processing' }).payoutStatus).toBe('pending_approval');
+    expect(mapOwnerStatementRun({ ...sample, status: 'failed' }).payoutStatus).toBe('on_hold');
+    expect(mapOwnerStatementRun({ ...sample, status: 'delivered' }).payoutStatus).toBe('disbursed_bank');
+  });
 });
