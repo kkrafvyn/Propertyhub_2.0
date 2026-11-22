@@ -52,6 +52,7 @@ import {
 } from "../../components/ux";
 import { orgActivityService } from "../../../lib/org-activity.service";
 import { useAuth } from "../../context/AuthContext";
+import { formatCurrencyAmount, summarizeByCurrency } from "../../../lib/currency-summary";
 import type { MemberRole } from "../../../lib/workspace";
 import { parseWorkspaceCustomization } from "../../../lib/workspace-customization.service";
 import { isDashboardWidgetEnabled } from "../../../lib/workspace-module-catalog";
@@ -70,12 +71,6 @@ interface WorkspaceDashboardProps extends MemberScopeProps {
   currentRole?: MemberRole | null;
   onRoleChange?: (role: MemberRole) => void;
 }
-
-const currencyFormatter = new Intl.NumberFormat("en-GH", {
-  style: "currency",
-  currency: "GHS",
-  maximumFractionDigits: 0,
-});
 
 const PIPELINE_LABELS: Record<string, string> = {
   new_inquiry: "New Inquiry",
@@ -304,8 +299,21 @@ export function WorkspaceDashboard({
     [dealCases]
   );
 
+  // The same numeric amount has a different meaning in each currency.
+  // Exclude won/lost/closed opportunities rather than showing them as open pipeline.
   const revenuePipeline = useMemo(
-    () => dealCases.reduce((total, dealCase) => total + (dealCase.listing?.price || 0), 0),
+    () => summarizeByCurrency(
+      dealCases
+        .filter((dealCase) => !["won", "lost", "closed", "rejected"].some(
+          (stage) => stage === String(dealCase.pipeline_stage || "").toLowerCase()
+            || stage === String(dealCase.status || "").toLowerCase(),
+        ))
+        .filter((dealCase) => dealCase.listing)
+        .map((dealCase) => ({
+          amount: Number(dealCase.listing.price || 0),
+          currency: dealCase.listing.currency,
+        })),
+    ),
     [dealCases]
   );
 
@@ -315,11 +323,12 @@ export function WorkspaceDashboard({
   );
 
   const collectedRevenue = useMemo(
-    () =>
-      successfulPayments.reduce(
-        (total, transaction) => total + ((transaction.amount_minor || 0) / 100),
-        0
-      ),
+    () => summarizeByCurrency(
+      successfulPayments.map((transaction) => ({
+        amount: Number(transaction.amount_minor || 0) / 100,
+        currency: transaction.currency,
+      })),
+    ),
     [successfulPayments]
   );
 
@@ -571,15 +580,15 @@ export function WorkspaceDashboard({
             />
             <MetricCard
               title="Total collected"
-              value={currencyFormatter.format(collectedRevenue)}
-              subtitle={`${successfulPayments.length} successful payments`}
+              value={collectedRevenue.headline}
+              subtitle={`${successfulPayments.length} successful payments${collectedRevenue.breakdown ? ` · ${collectedRevenue.breakdown}` : ""}`}
               icon={CreditCard}
               iconColor="emerald"
             />
             <MetricCard
               title="Pipeline value"
-              value={currencyFormatter.format(revenuePipeline)}
-              subtitle="Sum of open deal listing prices"
+              value={revenuePipeline.headline}
+              subtitle={revenuePipeline.breakdown || "Open deal listing prices"}
               icon={Coins}
               iconColor="amber"
             />
@@ -645,8 +654,8 @@ export function WorkspaceDashboard({
             />
             <MetricCard
               title="Pipeline value"
-              value={currencyFormatter.format(revenuePipeline)}
-              subtitle="Open deal listing prices"
+              value={revenuePipeline.headline}
+              subtitle={revenuePipeline.breakdown || "Open deal listing prices"}
               icon={Coins}
               iconColor="emerald"
             />
@@ -679,8 +688,8 @@ export function WorkspaceDashboard({
             />
             <MetricCard
               title="Revenue pipeline"
-              value={currencyFormatter.format(revenuePipeline)}
-              subtitle="Open deal listing prices"
+              value={revenuePipeline.headline}
+              subtitle={revenuePipeline.breakdown || "Open deal listing prices"}
               icon={CreditCard}
               iconColor="amber"
             />
@@ -738,7 +747,8 @@ export function WorkspaceDashboard({
                         {[listing.property?.city, listing.property?.region].filter(Boolean).join(", ") || "Location TBD"}
                       </p>
                       <p className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
-                        {currencyFormatter.format(listing.price)} / mo
+                        {formatCurrencyAmount(listing.price, listing.currency)}
+                        {listing.listing_type === "rental" ? " / mo" : listing.listing_type === "short_stay" ? " / night" : ""}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-xs border-surface-border shrink-0 capitalize">
