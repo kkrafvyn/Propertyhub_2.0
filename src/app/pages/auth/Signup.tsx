@@ -139,6 +139,20 @@ export function Signup() {
         </p>
       }
     >
+      <div className="mb-5 space-y-2">
+        <p className="text-sm font-medium text-white lg:text-foreground">I’m signing up to</p>
+        <div className="grid grid-cols-2 gap-2" role="group" aria-label="Account purpose">
+          <Link to="/signup" aria-current={accountType === "user" ? "page" : undefined}
+            className={`flex min-h-11 items-center justify-center rounded-xl border px-3 py-2 text-sm font-semibold ${accountType === "user" ? "border-white bg-white text-primary lg:border-primary lg:bg-primary lg:text-primary-foreground" : "border-white/30 text-white lg:border-surface-border lg:text-ink"}`}>
+            Find a property
+          </Link>
+          <Link to="/signup?type=landlord" aria-current={accountType === "landlord" ? "page" : undefined}
+            className={`flex min-h-11 items-center justify-center rounded-xl border px-3 py-2 text-sm font-semibold ${accountType === "landlord" ? "border-white bg-white text-primary lg:border-primary lg:bg-primary lg:text-primary-foreground" : "border-white/30 text-white lg:border-surface-border lg:text-ink"}`}>
+            Manage properties
+          </Link>
+        </div>
+        <p className="text-xs text-white/80 lg:text-ink-secondary">{accountType === "landlord" ? "Set up a landlord or agency workspace after creating your account." : "Save homes, request viewings and contact property teams."}</p>
+      </div>
       <OAuthButtons
         onGoogle={() => void handleOAuthSignIn("google")}
         onApple={() => void handleOAuthSignIn("apple")}
@@ -150,10 +164,11 @@ export function Signup() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+          <label htmlFor="signup-full-name" className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
             Full name
           </label>
           <Input
+            id="signup-full-name"
             type="text"
             placeholder="Kwame Mensah"
             value={formData.fullName}
@@ -165,10 +180,11 @@ export function Signup() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+          <label htmlFor="signup-email" className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
             Email address
           </label>
           <Input
+            id="signup-email"
             type="email"
             placeholder="name@domain.com"
             value={formData.email}
@@ -180,11 +196,12 @@ export function Signup() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+          <label htmlFor="signup-password" className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
             Password
           </label>
           <div className="relative">
             <Input
+              id="signup-password"
               type={showPassword ? "text" : "password"}
               placeholder="Minimum 8 characters"
               value={formData.password}
@@ -223,11 +240,12 @@ export function Signup() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+          <label htmlFor="signup-confirm-password" className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
             Confirm password
           </label>
           <div className="relative">
             <Input
+              id="signup-confirm-password"
               type={showConfirmPassword ? "text" : "password"}
               placeholder="Re-enter password"
               value={formData.confirmPassword}
@@ -251,6 +269,11 @@ export function Signup() {
               )}
             </button>
           </div>
+          {formData.confirmPassword.length > 0 && (
+            <p role="status" className={`text-xs ${formData.password === formData.confirmPassword ? "text-emerald-400 lg:text-emerald-700" : "text-amber-200 lg:text-amber-700"}`}>
+              {formData.password === formData.confirmPassword ? "Passwords match" : "Passwords do not match yet"}
+            </p>
+          )}
         </div>
 
         <div className="pt-1 text-white/90 lg:text-foreground">
