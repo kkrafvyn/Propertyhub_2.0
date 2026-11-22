@@ -31,7 +31,8 @@
 2. **Blocking and abuse:** the marketplace `messageService.createOrGetConversation` path does not visibly enforce the `blocked_users` table; workspace DMs use a different guarded RPC. Validate marketplace block bypasses, account suspension and per-user send rate limiting on live fixtures.
 3. **Trusted agent/AI messages:** existing client-facing code can request `sender_type = 'ai_bot'`. The new database guard rejects such authenticated inserts; AI/system replies should be sent via a trusted server-side endpoint rather than impersonated by browser clients. Verify this workflow before release.
 4. **Broadcast semantics:** typing/reaction/delivery events remain ephemeral client-origin signals and should never be used as authoritative records. Harden identity validation for those events if displayed as trusted status.
-5. **Other backends:** validate production migrations, RLS for multi-tenant data, payment webhook signatures/PayAngels certification, rate limiting, backup restore evidence, and secret access. None of these are proven live-ready by reading source.
+5. **Listing search scalability:** `listingService.searchListingsWithCount` currently downloads public listings and performs filtering, sort, counts, and pagination in client JavaScript. This risks incomplete search beyond PostgREST/Supabase row limits, expensive payloads, and slow browsing at scale. Implement an indexed, RLS-respecting server-side search RPC / query with true total counts and bounds. Cross-currency `price_asc` comparisons must be normalized before offering global price sort.
+6. **Other backends:** validate production migrations, RLS for multi-tenant data, payment webhook signatures/PayAngels certification, rate limiting, backup restore evidence, and secret access. None of these are proven live-ready by reading source.
 
 ## Required rollout and verification order
 
