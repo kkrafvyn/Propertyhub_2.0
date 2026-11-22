@@ -257,7 +257,7 @@ export function WorkspacePayments({
     try {
       setReleasingHoldId(holdId);
       await escrowService.releaseEscrowHold(holdId);
-      toast.success("Escrow released.");
+      toast.success("Release recorded. Verify settlement with the payment provider.");
       const holds = await escrowService.getOrganizationEscrowHolds(organization.id);
       setEscrowHolds(holds || []);
     } catch (error) {
@@ -283,7 +283,7 @@ export function WorkspacePayments({
     setSubmittingPartialRelease(true);
     try {
       await escrowService.releasePartialEscrowHold(partialReleaseHold.id, amountMinor);
-      toast.success("Partial escrow released successfully.");
+      toast.success("Partial release recorded. Verify settlement with the payment provider.");
       setPartialReleaseHold(null);
       setPartialReleaseAmount("");
       const holds = await escrowService.getOrganizationEscrowHolds(organization.id);
@@ -533,12 +533,12 @@ export function WorkspacePayments({
                 <Lock className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-ink">Active Escrow Protection Vaults</h2>
-                <p className="text-xs text-ink-muted">Funds securely held under regulated escrow until tenancy/settlement milestone sign-off</p>
+                <h2 className="text-lg font-bold text-ink">Recorded deposit holds</h2>
+                <p className="text-xs text-ink-muted">Internal hold records only. Confirm actual custody, release eligibility and settlement with the applicable payment provider.</p>
               </div>
             </div>
             <Badge variant="warning" dot pulse dotColor="amber">
-              {escrowHolds.filter((hold) => hold.status === "held").length} Pending Release
+              {escrowHolds.filter((hold) => hold.status === "held").length} Recorded as held
             </Badge>
           </div>
 
