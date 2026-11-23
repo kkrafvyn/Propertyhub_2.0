@@ -90,10 +90,16 @@ export function mapListingToCard(listing: any): MarketplaceListingCard {
 export function mapListingToMapListing(listing: any): MapListing {
   const card = mapListingToCard(listing);
   const property = listing.property || {};
-  const latitude = Number(property.latitude);
-  const longitude = Number(property.longitude);
+  // Number(null) is zero, so testing only Number.isFinite incorrectly pins
+  // properties without coordinates to Null Island (0,0).
+  const hasCoordinates = property.latitude != null && property.longitude != null
+    && property.latitude !== "" && property.longitude !== "";
+  const latitude = hasCoordinates ? Number(property.latitude) : Number.NaN;
+  const longitude = hasCoordinates ? Number(property.longitude) : Number.NaN;
 
-  if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+  if (Number.isFinite(latitude) && Number.isFinite(longitude)
+      && latitude >= -90 && latitude <= 90
+      && longitude >= -180 && longitude <= 180) {
     return {
       ...card,
       lat: latitude,
