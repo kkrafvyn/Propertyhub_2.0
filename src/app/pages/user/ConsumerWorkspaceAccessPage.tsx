@@ -151,8 +151,8 @@ export function ConsumerWorkspaceAccessPage() {
     <PageLayout variant="consumer">
       <ConsumerHubChrome activeSection="overview">
       <PageHeader
-        title="Own property? Use the workspace"
-        description="Claim a listing, create your landlord workspace, or request to join an existing company."
+        title="Apply for workspace access"
+        description="Business access is not granted at signup. Complete identity verification and submit an application for review, or request membership in an existing verified organization."
       />
 
       {ownerOversightPath ? (
@@ -204,9 +204,9 @@ export function ConsumerWorkspaceAccessPage() {
         </Card>
 
         <Card className="p-5 space-y-3">
-          <h2 className="font-semibold">Create your own workspace</h2>
+          <h2 className="font-semibold">Apply to open a workspace</h2>
           <p className="text-sm text-muted-foreground">
-            Start landlord / company enrollment with KYC. Approved claims are attached when present.
+            Apply as a property owner or company. Identity verification and BaytMiftah approval are required before any workspace is created.
           </p>
           {approvedClaim ? (
             <p className="text-xs text-emerald-700 flex items-center gap-1">
@@ -214,12 +214,12 @@ export function ConsumerWorkspaceAccessPage() {
             </p>
           ) : null}
           <Link to={enrollHref}>
-            <Button>Continue to workspace enrollment</Button>
+            <Button>Start workspace application</Button>
           </Link>
         </Card>
 
         <Card className="p-5 space-y-3 lg:col-span-2">
-          <h2 className="font-semibold">Request to join an existing company</h2>
+          <h2 className="font-semibold">Request to join an existing organization</h2>
           <div className="grid gap-3 md:grid-cols-2">
             <Input
               value={orgSlug}
