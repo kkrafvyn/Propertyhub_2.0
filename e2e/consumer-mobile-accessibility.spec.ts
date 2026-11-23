@@ -10,17 +10,15 @@ test.describe("Mobile consumer accessibility smoke", () => {
     deviceScaleFactor: 3,
   });
 
-  test("signup purpose and fields have usable accessible labels at phone width", async ({ page }) => {
-    await openRoute(page, "/signup");
+  test("signup is consumer-only with a separate reviewed workspace application", async ({ page }) => {
+    await openRoute(page, "/signup?type=landlord");
     await expect(page.getByRole("heading", { name: /create your account/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /find a property/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /manage properties/i })).toBeVisible();
+    await expect(page.getByText(/workspace access by approval/i)).toBeVisible();
+    await expect(page.getByText(/apply separately with identity verification/i)).toBeVisible();
     await expect(page.getByRole("textbox", { name: /full name/i })).toBeVisible();
     await expect(page.getByRole("textbox", { name: /email address/i })).toBeVisible();
-
-    await page.getByRole("link", { name: /manage properties/i }).click();
-    await expect(page).toHaveURL(/signup\?type=landlord/);
-    await expect(page.getByText(/landlord or agency workspace/i)).toBeVisible();
+    await expect(page.getByRole("link", { name: /manage properties/i })).toHaveCount(0);
+    await expect(page.getByRole("group", { name: /account purpose/i })).toHaveCount(0);
   });
 
   test("search keeps mobile viewport usable without document-level horizontal overflow", async ({ page }) => {
