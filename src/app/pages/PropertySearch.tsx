@@ -905,6 +905,9 @@ export function PropertySearch() {
               <>
                 <div className="mb-6">
                   <p className="text-muted-foreground">{resultSummary}</p>
+                  {(searchParams.get("sort") === "price_asc" || searchParams.get("sort") === "price_desc") ? (
+                    <p className="mt-1 text-xs text-ink-muted">Prices are ordered within currency groups, not converted across different currencies.</p>
+                  ) : null}
                 </div>
                 {viewMode === "grid" ? (
                   <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
