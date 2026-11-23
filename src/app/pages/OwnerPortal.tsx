@@ -93,7 +93,7 @@ export function OwnerPortal() {
                     </Badge>
                     <span className="text-xs text-ink-muted flex items-center gap-1">
                       <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-                      Live Escrow & Double-Entry Verified
+                      Property and payment activity overview
                     </span>
                   </div>
                   <h1 className="text-3xl sm:text-4xl font-display font-medium text-ink tracking-tight">
@@ -223,14 +223,14 @@ export function OwnerPortal() {
               )}
             </Card>
 
-            {/* Escrow & Trust Footer */}
+            {/* Payment and reporting transparency footer */}
             <div className="p-4 rounded-2xl bg-surface-subtle/60 border border-surface-border text-center space-y-1">
               <div className="flex items-center justify-center gap-1.5 text-xs font-medium text-ink">
                 <Landmark className="w-3.5 h-3.5 text-primary" />
-                <span>Protected by BaytMiftah Escrow & Trust Settlement Network</span>
+                <span>Payment services are provided by the applicable external financial provider</span>
               </div>
               <p className="text-[11px] text-ink-muted">
-                Statutory GRA withholding tax compliance & double-entry reconciliation guaranteed.
+                Tax treatment and reconciliation require verification against current provider and ledger records.
               </p>
             </div>
           </>

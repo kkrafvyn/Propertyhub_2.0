@@ -35,7 +35,7 @@ describe('admin marketing and app role screens',()=>{
     await user.clear(title);await user.type(title,'A clearer portfolio.');
     expect(screen.getByRole('button',{name:'Publish saved draft'})).toBeDisabled();
     await user.click(screen.getByRole('button',{name:'Preview draft'}));
-    expect(screen.getByRole('heading',{name:'A clearer portfolio. One clear picture.'})).toBeInTheDocument();
+    expect(screen.getByRole('heading',{name:/A clearer portfolio\./})).toBeInTheDocument();
     expect(marketingContentService.publish).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button',{name:'Save draft'}));
     await waitFor(()=>expect(marketingContentService.saveDraft).toHaveBeenCalledWith(expect.objectContaining({hero:expect.objectContaining({title:'A clearer portfolio.'})}),2));

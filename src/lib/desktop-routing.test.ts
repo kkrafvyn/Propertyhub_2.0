@@ -34,13 +34,30 @@ describe("desktop routing", () => {
     expect(isDesktopConsumerOnlyRoute("/about")).toBe(true);
   });
 
-  it("sends business users to workspace entry", () => {
+  it("sends trusted professional accounts to workspace entry", () => {
     expect(
       resolveDesktopProfessionalHome(
-        { user_metadata: { role: "host" } } as never,
+        { app_metadata: { role: "host" } } as never,
         null,
       ),
     ).toBe("/workspace");
+  });
+
+  it("rejects spoofed host/admin metadata when the consumer profile is known", () => {
+    expect(resolveDesktopProfessionalHome(
+      { user_metadata: { role: "host" } } as never, { role: "consumer" },
+    )).toBe("/login?reason=business-only");
+    expect(resolveDesktopProfessionalHome(
+      { user_metadata: { role: "platform_admin" } } as never, { role: "consumer" },
+    )).toBe("/login?reason=business-only");
+  });
+
+  it("lets a legitimately approved workspace member reach desktop without mutable role metadata", () => {
+    expect(resolveDesktopProfessionalHome(
+      { user_metadata: { role: "consumer" } } as never,
+      { role: "consumer" },
+      { hasOrgMembership: true },
+    )).toBe("/workspace");
   });
 
   it("sends platform admins to admin console", () => {

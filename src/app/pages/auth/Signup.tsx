@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Loader2, Eye, EyeOff, Check } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -7,17 +7,12 @@ import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import { AuthShell, AuthDivider, OAuthButtons, PageMeta } from "../../components/baytmiftah";
 import { LegalAcceptanceCheckbox } from "../../components/legal/LegalAcceptanceCheckbox";
-import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION, LEGAL_VERSION_KEY, type LegalAcceptanceScope } from "../../../lib/legal-config";
+import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION, LEGAL_VERSION_KEY } from "../../../lib/legal-config";
 import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
 import { validatePassword } from "../../../lib/security/password-policy";
 import { supabase } from "../../../lib/supabase";
 
-type SignupAccountType = "user" | "landlord";
-
 export function Signup() {
-  const [searchParams] = useSearchParams();
-  const accountType: SignupAccountType =
-    searchParams.get("type") === "landlord" ? "landlord" : "user";
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -34,13 +29,10 @@ export function Signup() {
   const navigate = useNavigate();
   const { signUp, signInWithOAuth, user } = useAuth();
 
-  const oauthRedirectUrl = useMemo(() => {
-    const next = accountType === "landlord" ? "/workspace" : "/app";
-    return `${window.location.origin}/login?next=${encodeURIComponent(next)}`;
-  }, [accountType]);
-
-  const legalScope: LegalAcceptanceScope =
-    accountType === "landlord" ? "signup_host" : "signup_consumer";
+  // Account creation is always for a consumer. Workspace status is granted only
+  // through the separately reviewed identity/KYC and enrollment process.
+  const oauthRedirectUrl = `${window.location.origin}/login?next=${encodeURIComponent("/app")}`;
+  const legalScope = "signup_consumer" as const;
 
   useEffect(() => {
     if (user) {
@@ -94,7 +86,6 @@ export function Signup() {
         formData.email,
         formData.password,
         formData.fullName,
-        accountType,
       );
       if (user?.id) {
         const { data: sessionData } = await supabase.auth.getSession();
@@ -109,11 +100,7 @@ export function Signup() {
         }
       }
       toast.success("Account created successfully. Check your email to verify.");
-      navigate("/login", {
-        state: {
-          from: accountType === "landlord" ? "/workspace" : "/app",
-        },
-      });
+      navigate("/login", { state: { from: "/app" } });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Registration failed");
     } finally {
@@ -150,10 +137,11 @@ export function Signup() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+          <label htmlFor="signup-full-name" className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
             Full name
           </label>
           <Input
+            id="signup-full-name"
             type="text"
             placeholder="Kwame Mensah"
             value={formData.fullName}
@@ -165,10 +153,11 @@ export function Signup() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+          <label htmlFor="signup-email" className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
             Email address
           </label>
           <Input
+            id="signup-email"
             type="email"
             placeholder="name@domain.com"
             value={formData.email}
@@ -180,11 +169,12 @@ export function Signup() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+          <label htmlFor="signup-password" className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
             Password
           </label>
           <div className="relative">
             <Input
+              id="signup-password"
               type={showPassword ? "text" : "password"}
               placeholder="Minimum 8 characters"
               value={formData.password}
@@ -223,11 +213,12 @@ export function Signup() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+          <label htmlFor="signup-confirm-password" className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
             Confirm password
           </label>
           <div className="relative">
             <Input
+              id="signup-confirm-password"
               type={showConfirmPassword ? "text" : "password"}
               placeholder="Re-enter password"
               value={formData.confirmPassword}
@@ -251,6 +242,11 @@ export function Signup() {
               )}
             </button>
           </div>
+          {formData.confirmPassword.length > 0 && (
+            <p role="status" className={`text-xs ${formData.password === formData.confirmPassword ? "text-emerald-400 lg:text-emerald-700" : "text-amber-200 lg:text-amber-700"}`}>
+              {formData.password === formData.confirmPassword ? "Passwords match" : "Passwords do not match yet"}
+            </p>
+          )}
         </div>
 
         <div className="pt-1 text-white/90 lg:text-foreground">

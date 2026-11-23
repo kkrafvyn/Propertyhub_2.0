@@ -247,13 +247,10 @@ export const messageService = {
 
     if (messageError) throw messageError
 
-    // Update conversation's last_message_at
-    const { error: updateError } = await supabase
-      .from('conversations')
-      .update({ last_message_at: new Date().toISOString() })
-      .eq('id', conversationId)
-
-    if (updateError) throw updateError
+    // The database's trg_update_conversation_last_message trigger updates
+    // conversation metadata atomically with the inserted message. A separate
+    // client-side UPDATE may be denied by RLS after the message has already
+    // been saved, causing a false send failure and duplicate retries.
 
     await supabase
       .from('organization_conversations')

@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import { DesktopShell } from "../components/baytmiftah/DesktopShell";
 import { ShareListingButton } from "../components/baytmiftah/ShareListingButton";
 import { SimilarListings } from "../components/baytmiftah/SimilarListings";
+import { Property3DTour } from "../components/baytmiftah/Property3DTour";
 import { mapListingToCard } from "../components/baytmiftah/listing-mappers";
 import MessageHostButton from "../components/baytmiftah/chat/MessageHostButton";
 import StayBookingCard from "../components/baytmiftah/StayBookingCard";
@@ -51,6 +52,7 @@ import { isVideoCallsEnabledForApp } from "../../lib/app-feature-gates";
 import { usePlatformFeatures } from "../context/PlatformFeaturesContext";
 import { listingService } from "../../lib/listing.service";
 import { getPropertyCoverImage, getPropertyImageGallery } from "../../lib/property-media";
+import { normalizeMatterportTourUrl } from "../../lib/virtual-tour";
 import { savedPropertyService } from "../../lib/savedproperty.service";
 import { dealCaseService } from "../../lib/dealcase.service";
 import { messageService } from "../../lib/message.service";
@@ -837,6 +839,12 @@ export function PropertyDetail() {
           </DialogContent>
         </Dialog>
 
+        {normalizeMatterportTourUrl(property.virtual_tour_url) ? (
+          <div className="mb-8">
+            <Property3DTour tourUrl={property.virtual_tour_url} propertyName={pageTitle} />
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             <div>
@@ -932,6 +940,11 @@ export function PropertyDetail() {
               <ListingFreshness key={listing.id} listing={listing} />
               <DocumentChecklist />
               <PropertyCostSummary currency={paymentCurrency} price={listing.price} listingType={listing.listing_type} minimumDeposit={listing.minimum_deposit_amount} inspectionFee={listing.inspection_fee_amount} />
+              {normalizeMatterportTourUrl(property.virtual_tour_url) ? (
+                <a href="#property-3d-tour" className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary">
+                  Explore the interactive 3D walkthrough
+                </a>
+              ) : null}
 
               {/* Luxury Spec Tiles */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 py-6 border-y border-surface-border my-6">
@@ -1228,7 +1241,7 @@ export function PropertyDetail() {
               </div>
             )}
             <Card variant="glass" className="p-6 lg:p-7 sticky top-24 rounded-3xl border border-surface-border/80 shadow-glass-card bg-surface/90 backdrop-blur-md">
-              {/* Price & Escrow Guarantee Header */}
+              {/* Transparent listed price and payment-provider status (not an escrow guarantee). */}
               <div className="flex items-center justify-between gap-3 mb-5 pb-5 border-b border-surface-border/60">
                 <div>
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
@@ -1238,10 +1251,11 @@ export function PropertyDetail() {
                     <span className="text-xl font-normal text-muted-foreground mr-1">{paymentCurrency}</span>
                     {listing.price.toLocaleString()}
                   </div>
+                  <p className="mt-1 text-xs text-ink-muted">Listed price only; any applicable deposits, taxes or service charges are shown before payment.</p>
                 </div>
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 shadow-xs">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>Escrow Protected</span>
+                  <span>{clientIntegrations.payangels.checkoutReady ? "Provider checkout available" : "Ask about payment options"}</span>
                 </div>
               </div>
 
@@ -1285,26 +1299,30 @@ export function PropertyDetail() {
                       Schedule Viewing
                     </Button>
 
-                    <Link to={`/app/workspace-access?claimListing=${listing.id}`}>
-                      <Button
-                        variant="outline"
-                        className="w-full font-semibold rounded-2xl hover:border-amber-500/40 hover:bg-amber-500/5 transition-all py-3"
-                      >
-                        Claim this property
-                      </Button>
+                    <Link
+                      to={`/app/workspace-access?claimListing=${listing.id}`}
+                      className="flex min-h-11 w-full items-center justify-center rounded-2xl border border-surface-border px-4 py-3 text-sm font-semibold text-ink transition-colors hover:border-primary/40 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-primary"
+                    >
+                      Claim this property
                     </Link>
                   </>
                 )}
 
-                {/* Secure Checkout Option */}
-                <Button
-                  variant="outline"
-                  className="w-full rounded-2xl text-xs font-semibold hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all flex items-center justify-center gap-2 text-foreground"
-                  onClick={() => setShowPaymentForm(true)}
-                >
-                  <CreditCard className="w-3.5 h-3.5 text-emerald-500" />
-                  Pay Deposit via PayAngels Escrow
-                </Button>
+                {/* BaytMiftah is a marketplace and does not hold customer funds. */}
+                {clientIntegrations.payangels.checkoutReady ? (
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-2xl text-xs font-semibold hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all flex items-center justify-center gap-2 text-foreground"
+                    onClick={() => setShowPaymentForm(true)}
+                  >
+                    <CreditCard className="w-3.5 h-3.5 text-emerald-500" />
+                    Pay deposit through payment provider
+                  </Button>
+                ) : (
+                  <p className="rounded-xl border border-surface-border bg-surface-subtle p-3 text-xs text-ink-secondary">
+                    Online deposit payment is not yet available for this listing. Contact the agency to discuss next steps.
+                  </p>
+                )}
               </div>
 
               {/* Host & Agency Details */}

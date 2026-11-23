@@ -145,7 +145,8 @@ export function generateLeaseSchedule(input: LeaseScheduleInput): GeneratedLease
     jurisdictionLabel: context.pack.label,
     subdivisionLabel,
     governingLaw,
-    paymentRail: paymentLabel,
+    // paymentLabel is the local currency/payment context, not the payment provider.
+    paymentRail: `PayAngels (where enabled; ${paymentLabel})`,
     warnings,
     addendumTitle: addendum?.title,
     addendumClauses: addendum?.clauses || [],

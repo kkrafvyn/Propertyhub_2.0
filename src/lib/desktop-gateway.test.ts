@@ -11,7 +11,7 @@ import {
 
 const businessUser = {
   id: "user-business",
-  user_metadata: { role: "host" },
+  app_metadata: { role: "host" },
 };
 
 describe("desktop gateway", () => {
@@ -24,8 +24,10 @@ describe("desktop gateway", () => {
     expect(isBusinessWebUser(businessUser, null)).toBe(true);
     expect(isBusinessWebUser({ id: "1", user_metadata: { role: "consumer" } }, null)).toBe(false);
     expect(
-      isBusinessWebUser({ id: "1", user_metadata: { account_type: "landlord" } }, null),
+      isBusinessWebUser({ id: "1", app_metadata: { account_type: "landlord" } }, null),
     ).toBe(true);
+    expect(isBusinessWebUser({ id: "1", user_metadata: { role: "host" } }, null)).toBe(false);
+    expect(isBusinessWebUser({ id: "1", user_metadata: { account_type: "landlord" } }, null)).toBe(false);
   });
 
   it("excludes platform staff from business desktop flow", () => {

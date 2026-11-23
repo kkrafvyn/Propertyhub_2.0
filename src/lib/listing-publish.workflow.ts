@@ -3,6 +3,7 @@ import { listingService } from "./listing.service";
 import { listingQualityService } from "./listing-quality.service";
 import { propertyMediaService } from "./property-media.service";
 import { propertyService } from "./property.service";
+import { normalizeMatterportTourUrl } from "./virtual-tour";
 import { legalAcceptanceService } from "./legal-acceptance.service";
 import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from "./legal-config";
 
@@ -32,6 +33,7 @@ export type ListingDraftInput = {
   bathrooms?: number | null;
   squareMeters?: number | null;
   description?: string | null;
+  virtualTourUrl?: string | null;
   amenities?: string[] | null;
   listingType: ListingType;
   price: number;
@@ -56,6 +58,10 @@ export type ListingPublishResult = {
 };
 
 export async function saveListingDraft(input: ListingDraftInput): Promise<ListingPublishResult> {
+  const virtualTourUrl = normalizeMatterportTourUrl(input.virtualTourUrl);
+  if (input.virtualTourUrl?.trim() && !virtualTourUrl) {
+    throw new Error("3D tour URL must be a valid published Matterport link.");
+  }
   let propertyId = input.propertyId || null;
   let listingId = input.listingId || null;
 
@@ -78,9 +84,12 @@ export async function saveListingDraft(input: ListingDraftInput): Promise<Listin
       bathrooms: input.bathrooms ?? null,
       square_meters: input.squareMeters ?? null,
       description: input.description || null,
+      virtual_tour_url: virtualTourUrl,
       amenities: input.amenities || null,
     });
     propertyId = property.id;
+  } else if (input.virtualTourUrl !== undefined) {
+    await propertyService.updateProperty(propertyId, { virtual_tour_url: virtualTourUrl });
   }
 
   const qualityReport = input.qualityReport;

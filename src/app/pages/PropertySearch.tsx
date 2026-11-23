@@ -102,6 +102,7 @@ export function PropertySearch() {
   const [showFilters, setShowFilters] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const listingRequest = useRef(0);
   const [listings, setListings] = useState<any[]>([]);
   const [totalResults, setTotalResults] = useState(0);
@@ -218,6 +219,7 @@ export function PropertySearch() {
     const request = ++listingRequest.current;
     try {
       setLoading(true);
+      setLoadError(false);
       const activeFilters = buildFiltersFromSearchParams(searchParams);
       const queryText = searchParams.get("q") || "";
       const searchFilter = {
@@ -246,6 +248,9 @@ export function PropertySearch() {
     } catch (error) {
       if (request !== listingRequest.current) return;
       console.error("Failed to load listings:", error);
+      setLoadError(true);
+      setListings([]);
+      setTotalResults(0);
       toast.error(t("searchPage.loadListingsFailed"));
     } finally {
       if (request === listingRequest.current) setLoading(false);
@@ -855,6 +860,12 @@ export function PropertySearch() {
                   <ListingCardSkeleton key={i} />
                 ))}
               </div>
+            ) : loadError ? (
+              <div role="alert" className="rounded-2xl border border-surface-border bg-surface p-6 text-center">
+                <h2 className="text-lg font-semibold text-ink">Could not load these results</h2>
+                <p className="mt-2 text-sm text-ink-secondary">Check your connection, then retry. Your filters have been kept.</p>
+                <Button variant="outline" className="mt-4" onClick={() => void loadListings()}>Try search again</Button>
+              </div>
             ) : listings.length === 0 ? (
               <div className="space-y-6">
                 <EmptyState
@@ -894,6 +905,9 @@ export function PropertySearch() {
               <>
                 <div className="mb-6">
                   <p className="text-muted-foreground">{resultSummary}</p>
+                  {(searchParams.get("sort") === "price_asc" || searchParams.get("sort") === "price_desc") ? (
+                    <p className="mt-1 text-xs text-ink-muted">Prices are ordered within currency groups, not converted across different currencies.</p>
+                  ) : null}
                 </div>
                 {viewMode === "grid" ? (
                   <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -943,11 +957,9 @@ export function PropertySearch() {
                                 <div className="flex items-center justify-between">
                                   <div>
                                     <span className="text-3xl font-semibold text-primary">
-                                      GHS {listing.price.toLocaleString()}
+                                      {mapListingToCard(listing).priceLabel}
                                     </span>
-                                    {listing.listing_type === 'rental' && (
-                                      <span className="text-sm text-muted-foreground">{t("searchPage.perMonth")}</span>
-                                    )}
+
                                   </div>
                                   {listing.property?.bedrooms && (
                                     <div className="flex gap-4 text-sm text-muted-foreground">
@@ -976,7 +988,7 @@ export function PropertySearch() {
             )}
 
             {/* Pagination */}
-            {totalResults > PAGE_SIZE && (
+            {viewMode !== "map" && !loadError && totalResults > PAGE_SIZE && (
               <div className="mt-12 flex flex-col items-center gap-4">
                 <p className="text-xs text-ink-muted">{resultSummary}</p>
                 <div className="flex items-center justify-center gap-1.5 flex-wrap">
@@ -995,6 +1007,8 @@ export function PropertySearch() {
                       variant={page === currentPage ? "primary" : "outline"}
                       size="sm"
                       onClick={() => handlePageChange(page)}
+                      aria-label={`Go to results page ${page}`}
+                      aria-current={page === currentPage ? "page" : undefined}
                       className="text-xs w-8 h-8 p-0"
                     >
                       {page}

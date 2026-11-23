@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import { Download, Laptop, Lock, MonitorSmartphone } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
@@ -8,7 +8,6 @@ import { isElectron } from "../../../lib/surface-detection";
 import {
   DESKTOP_GATEWAY_FEATURES,
   getDesktopDownloadUrl,
-  isBusinessWebUser,
   markDesktopPromptSeen,
   openBaytMiftahDesktop,
 } from "../../../lib/desktop-gateway";
@@ -19,10 +18,8 @@ import {
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 
 export function DesktopGateway() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const forceGateway = searchParams.get("force") === "1";
   const downloadUrl = useMemo(() => getDesktopDownloadUrl(), []);
   const [eligibility, setEligibility] = useState<DesktopEligibilityResult | null>(null);
   const [eligibilityLoading, setEligibilityLoading] = useState(true);
@@ -45,7 +42,7 @@ export function DesktopGateway() {
       .catch((error) => {
         console.error("Failed to resolve desktop eligibility:", error);
         if (!cancelled) {
-          setEligibility({ eligible: true, reason: "no_organization" });
+          setEligibility({ eligible: false, reason: "verification_unavailable" });
         }
       })
       .finally(() => {
@@ -57,18 +54,18 @@ export function DesktopGateway() {
     };
   }, [user?.id]);
 
-  const desktopAllowed = forceGateway || eligibility?.eligible !== false;
+  const desktopAllowed = !eligibilityLoading && eligibility?.eligible === true;
 
   if (!user) {
     return <Navigate to="/login?next=/workspace/desktop" replace />;
   }
 
-  if (!isBusinessWebUser(user, profile)) {
-    return <Navigate to="/app" replace />;
-  }
-
   if (isElectron()) {
     return <Navigate to={WORKSPACE_ENTRY_PATH} replace />;
+  }
+
+  if (!eligibilityLoading && eligibility?.reason === "no_organization") {
+    return <Navigate to="/app/workspace-access" replace />;
   }
 
   const continueOnWeb = () => {
@@ -102,12 +99,14 @@ export function DesktopGateway() {
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
             {desktopAllowed
               ? "Your professional desktop app is ready"
-              : "Desktop is available on Business plans"}
+              : "Workspace approval and desktop eligibility required"}
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base text-white/70">
             {desktopAllowed
               ? "Manage properties, team, finance, leasing, and operations from a workspace built for landlords, agents, and property managers — not consumer browsing."
-              : eligibility?.planLabel
+              : eligibility?.reason === "verification_unavailable"
+                ? "Desktop eligibility could not be verified. Please sign in again or contact support; access is not granted until verification succeeds."
+                : eligibility?.planLabel
                 ? `Your ${eligibility.planLabel} workspace (${eligibility.organizationName || "current organization"}) includes web access only. Upgrade to Business or Enterprise to download BaytMiftah Desktop.`
                 : "Your current plan includes web access only. Upgrade to Business or Enterprise to download BaytMiftah Desktop."}
           </p>
@@ -192,9 +191,6 @@ export function DesktopGateway() {
             <MonitorSmartphone className="mr-2 h-4 w-4" />
             Continue on Web
           </Button>
-          {forceGateway ? (
-            <p className="text-xs text-white/40">Preview mode: gateway forced via ?force=1</p>
-          ) : null}
         </div>
       </div>
     </div>

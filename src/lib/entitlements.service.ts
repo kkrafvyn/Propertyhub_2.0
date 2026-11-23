@@ -7,7 +7,7 @@ export type SaasPlanCode = "personal" | "business_trial" | "business" | "enterpr
 
 export type DesktopEligibilityResult = {
   eligible: boolean;
-  reason?: "no_organization" | "plan_restricted" | "suspended";
+  reason?: "no_organization" | "plan_restricted" | "suspended" | "verification_unavailable";
   planCode?: string;
   planLabel?: string;
   organizationId?: string;
@@ -68,21 +68,20 @@ export const entitlementsService = {
     if (limits && typeof limits.desktop_enabled === "boolean") {
       return limits.desktop_enabled;
     }
-    return SAAS_PLAN_DEFINITIONS[planCode as SaasPlanCode]?.desktopEnabled ?? true;
+    return SAAS_PLAN_DEFINITIONS[planCode as SaasPlanCode]?.desktopEnabled ?? false;
   },
 
   canUseDesktop(profile: OrganizationProfile | null | undefined) {
-    if (!profile?.entitlements) return true;
-    return profile.entitlements.desktopEnabled;
+    // Unknown/missing entitlements never grant desktop capabilities.
+    return profile?.entitlements?.desktopEnabled === true;
   },
 
   async resolveUserDesktopEligibility(userId: string): Promise<DesktopEligibilityResult> {
     const memberships = await organizationService.getUserOrganizations(userId);
     if (!memberships?.length) {
       return {
-        eligible: true,
+        eligible: false,
         reason: "no_organization",
-        planLabel: SAAS_PLAN_DEFINITIONS.business_trial.label,
       };
     }
 

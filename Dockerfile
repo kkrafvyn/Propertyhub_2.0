@@ -1,5 +1,5 @@
 # BaytMiftah web app — staging / local container image (not production marketing)
-FROM node:20-bookworm-slim AS build
+FROM node:24-bookworm-slim AS build
 
 WORKDIR /app
 
@@ -9,9 +9,9 @@ RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npm run build:web
 
-FROM nginx:1.27-alpine AS runtime
+FROM nginx:stable-alpine AS runtime
 
-RUN apk upgrade --no-cache libcrypto3 libssl3 openssl || apk upgrade --no-cache
+RUN apk upgrade --no-cache
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 

@@ -19,6 +19,7 @@ import { realEstateComplianceService, type ListingType as ComplianceListingType 
 import { countryRulesService } from "../../../lib/country-rules.service";
 import { resolveSubdivisionCode } from "../../../lib/country-rules/subdivision-resolver";
 import { validatePropertyLocationForPublish } from "../../../lib/property-jurisdiction-validation";
+import { normalizeMatterportTourUrl } from "../../../lib/virtual-tour";
 import { resolveJurisdiction } from "../../../lib/real-estate-compliance";
 import { listingQualityService } from "../../../lib/listing-quality.service";
 import { LISTING_TYPES, type ListingType } from "../../../lib/listing-types";
@@ -78,6 +79,7 @@ export function WorkspaceNewListing({
     bathrooms: "",
     squareMeters: "",
     description: "",
+    virtualTourUrl: "",
     amenities: "",
     listingType: "rental" as ListingType,
     price: "",
@@ -154,6 +156,11 @@ export function WorkspaceNewListing({
       return;
     }
 
+    if (form.virtualTourUrl.trim() && !normalizeMatterportTourUrl(form.virtualTourUrl)) {
+      toast.error("Enter a valid Matterport tour link or leave the field empty.");
+      return;
+    }
+
     if (form.status === "listed" || form.status === "pending_review") {
       if (!complianceReady) {
         toast.error("Complete the compliance checklist before publishing.");
@@ -204,8 +211,8 @@ export function WorkspaceNewListing({
         neighborhood: form.neighborhood.trim() || null,
         country: form.country,
         subdivisionCode,
-        latitude: geocodingResult?.latitude || null,
-        longitude: geocodingResult?.longitude || null,
+        latitude: geocodingResult?.latitude ?? null,
+        longitude: geocodingResult?.longitude ?? null,
         locationConfidence: ghanaMarketService.calculateLocationConfidence({
           address: form.address,
           city: form.city,
@@ -219,6 +226,7 @@ export function WorkspaceNewListing({
         bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
         squareMeters: form.squareMeters ? Number(form.squareMeters) : null,
         description: form.description || null,
+        virtualTourUrl: normalizeMatterportTourUrl(form.virtualTourUrl),
         amenities: form.amenities
           ? form.amenities
               .split(",")
@@ -562,6 +570,19 @@ export function WorkspaceNewListing({
             </FormRow>
           </div>
 
+          <div className="mt-4 rounded-2xl border border-surface-border bg-surface-subtle p-4">
+            <Input
+              label="3D property tour (Matterport link)"
+              type="url"
+              value={form.virtualTourUrl}
+              onChange={(event) => updateField("virtualTourUrl", event.target.value)}
+              placeholder="https://my.matterport.com/show/?m=AbCdEf12345"
+            />
+            <p className="mt-2 text-xs text-muted-foreground">Optional. Link a published Matterport scan so buyers and tenants can walk through the property virtually. Do not paste iframe code.</p>
+            {form.virtualTourUrl && !normalizeMatterportTourUrl(form.virtualTourUrl) && (
+              <p role="alert" className="mt-1 text-xs text-destructive">Enter a valid Matterport model link.</p>
+            )}
+          </div>
           <div className="mt-4">
             <Input
               label="Amenities"

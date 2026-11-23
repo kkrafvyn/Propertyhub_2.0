@@ -1405,9 +1405,10 @@ export function AdminLayout({ contentOnly = false }: { contentOnly?: boolean } =
   return (
     <>
     <div className="admin-legacy-ui min-h-screen bg-background">
-      <nav className="bg-gradient-to-r from-primary to-accent text-white">
+      <a href="#admin-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-4 focus:py-2 focus:text-ink">Skip to admin content</a>
+      <nav className="bg-gradient-to-r from-primary to-accent text-white" aria-label="Admin header">
         <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-4">
               <Link to="/" className="flex items-center gap-2">
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
@@ -1419,26 +1420,24 @@ export function AdminLayout({ contentOnly = false }: { contentOnly?: boolean } =
                 </div>
               </Link>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <Badge className="bg-white/15 text-white border-white/20">
                 {platformRoleLabel(profile)}
               </Badge>
               <Badge className="bg-white/15 text-white border-white/20">
                 {queueCount} in queue
               </Badge>
-              <Link to="/">
-                <Button variant="secondary" size="sm">
-                  Back to Site
-                </Button>
+              <Link to="/" className="inline-flex min-h-10 items-center rounded-lg border border-white/20 bg-white px-3 py-2 text-sm font-semibold text-primary transition hover:bg-white/90">
+                Back to site
               </Link>
             </div>
           </div>
         </div>
       </nav>
 
-      <div className="flex">
-        <aside className="w-64 border-r border-border bg-card min-h-[calc(100vh-73px)] p-6">
-          <nav className="space-y-2">
+      <div className="flex min-w-0 flex-col lg:flex-row">
+        <aside className="w-full shrink-0 border-b border-border bg-card p-3 lg:min-h-[calc(100vh-73px)] lg:w-64 lg:border-b-0 lg:border-r lg:p-6">
+          <nav className="flex gap-2 overflow-x-auto pb-2 lg:block lg:space-y-2" aria-label="Admin sections">
             {visibleNavItems.map((item) => {
               const isActive =
                 currentSection === item.key ||
@@ -1451,7 +1450,7 @@ export function AdminLayout({ contentOnly = false }: { contentOnly?: boolean } =
                   key={item.key}
                   to={item.href}
                   aria-current={isActive ? "page" : undefined}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`flex min-h-11 shrink-0 items-center gap-3 whitespace-nowrap rounded-lg px-4 py-3 transition-colors lg:w-full ${
                     isActive ? "bg-primary text-white" : "hover:bg-secondary"
                   }`}
                 >
@@ -1472,7 +1471,7 @@ export function AdminLayout({ contentOnly = false }: { contentOnly?: boolean } =
           </nav>
         </aside>
 
-        <main className="flex-1 p-8 bg-secondary/30">
+        <main id="admin-content" tabIndex={-1} className="min-w-0 flex-1 bg-secondary/30 p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl">
             <div className="mb-8">
               <h1 className="text-3xl font-semibold mb-2">{sectionTitle}</h1>

@@ -1,5 +1,6 @@
 import { bookingService } from "../../../lib/booking.service";
 import { supabase } from "../../../lib/supabase";
+import { stayNights } from "./stay-date-rules";
 
 export async function fetchListingAvailability(listingId: string) {
   const availability = await bookingService.getListingAvailability(listingId);
@@ -24,18 +25,26 @@ export async function createReservation({
   const userId = userData.user?.id;
   if (!userId) throw new Error("Sign in to book");
 
-  const { data: listing } = await supabase
+  if (!Number.isInteger(guests) || guests < 1 || guests > 12) {
+    throw new Error("Choose between 1 and 12 guests.");
+  }
+  const nights = stayNights(checkIn, checkOut);
+  if (nights < 1 || checkIn < new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)) {
+    throw new Error("Choose a future check-in and a check-out at least one night later.");
+  }
+
+  const { data: listing, error: listingError } = await supabase
     .from("listings")
-    .select("organization_id, price, currency")
+    .select("organization_id, price, currency, listing_type, status, visibility")
     .eq("id", listingId)
     .maybeSingle();
-
-  const nights = Math.max(
-    1,
-    Math.ceil(
-      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)
-    )
-  );
+  if (listingError) throw listingError;
+  if (!listing || listing.listing_type !== "short_stay" || listing.status !== "listed" || listing.visibility !== "public") {
+    throw new Error("This stay is not available for booking.");
+  }
+  if (!listing.organization_id || !Number.isFinite(Number(listing.price)) || Number(listing.price) <= 0) {
+    throw new Error("Listing price or organization is unavailable.");
+  }
   const nightlyRateMinor = Math.round((Number(listing?.price) || 0) * 100);
 
   const booking = await bookingService.createPendingBooking({

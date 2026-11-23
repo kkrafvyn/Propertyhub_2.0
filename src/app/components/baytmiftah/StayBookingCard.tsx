@@ -13,9 +13,9 @@ import { legalAcceptanceService } from '../../../lib/legal-acceptance.service'
 import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from '../../../lib/legal-config'
 import { canBookStay } from '../../../lib/kyc-gate.service'
 import { clientIntegrations } from '../../../lib/integrations'
-import KycBanner from './KycBanner'
 import { ListingTrustStrip } from '../ListingTrustStrip'
 import { clearJourneyDraft, readJourneyDraft, saveJourneyDraft } from '../../../lib/journey-draft-storage'
+import { nextStayDate, stayNights } from '../../lib/baytmiftah/stay-date-rules'
 
 type StayBookingListing = {
   id: string
@@ -40,6 +40,7 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
   const [checkOut, setCheckOut] = useState('')
   const [guests, setGuests] = useState(1)
   const [availability, setAvailability] = useState<Array<{ available_date: string; is_available: boolean }>>([])
+  const [availabilityError, setAvailabilityError] = useState(false)
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
   const [bookingTermsAccepted, setBookingTermsAccepted] = useState(false)
@@ -47,8 +48,14 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
   const bookingMode = listing.instantBook ? 'instant' : 'request'
 
   useEffect(() => {
-    fetchListingAvailability(listing.id).then(({ availability: rows }) => setAvailability(rows ?? []))
-  }, [listing.id, user?.id])
+    let cancelled = false
+    setAvailability([])
+    setAvailabilityError(false)
+    void fetchListingAvailability(listing.id)
+      .then(({ availability: rows }) => { if (!cancelled) setAvailability(rows ?? []) })
+      .catch(() => { if (!cancelled) setAvailabilityError(true) })
+    return () => { cancelled = true }
+  }, [listing.id])
 
   useEffect(() => {
     const draft = readJourneyDraft<{ checkIn?: string; checkOut?: string; guests?: number }>(
@@ -62,9 +69,7 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
   }, [listing.id])
 
   const nightlyRate = Number(listing.price) || 0
-  const nights = checkIn && checkOut
-    ? Math.max(1, Math.ceil((Number(new Date(checkOut)) - Number(new Date(checkIn))) / (1000 * 60 * 60 * 24)))
-    : 0
+  const nights = stayNights(checkIn, checkOut)
   const total = nights * nightlyRate
   const blockedDates = new Set(
     availability.filter((row) => row.is_available === false).map((row) => row.available_date)
@@ -72,10 +77,7 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
 
   const hasBlockedSelection = () => {
     if (!checkIn || !checkOut) return false
-    const start = new Date(checkIn)
-    const end = new Date(checkOut)
-    for (let cursor = new Date(start); cursor < end; cursor.setDate(cursor.getDate() + 1)) {
-      const key = cursor.toISOString().slice(0, 10)
+    for (let key = checkIn; key < checkOut; key = nextStayDate(key)) {
       if (blockedDates.has(key)) return true
     }
     return false
@@ -87,8 +89,16 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
       navigate('/login', { state: { from: `/property/${listing.id}` } })
       return
     }
-    if (!checkIn || !checkOut || nights < 1) {
-      setMessage('Select check-in and check-out dates.')
+    if (!checkIn || !checkOut || nights < 1 || checkIn < new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)) {
+      setMessage('Select a future check-in and a check-out at least one night later.')
+      return
+    }
+    if (!Number.isInteger(guests) || guests < 1 || guests > 12) {
+      setMessage('Choose between 1 and 12 guests.')
+      return
+    }
+    if (availabilityError) {
+      setMessage('Availability could not be checked. Please try again before booking.')
       return
     }
     if (hasBlockedSelection()) {
@@ -123,6 +133,15 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
     setMessage('')
 
     try {
+      // Record the accepted terms before reserving. Otherwise a failure in
+      // the separate acceptance write can report an already-created booking
+      // as failed and cause accidental duplicate retry attempts.
+      await legalAcceptanceService.recordAcceptance({
+        userId: user.id,
+        scope: 'short_stay_booking',
+        policySlugs: ACCEPTANCE_SCOPES.short_stay_booking.policySlugs,
+        policyVersion: LEGAL_POLICY_VERSION,
+      })
       const result = await createReservation({
         listingId: listing.id,
         checkIn,
@@ -130,19 +149,11 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
         guests,
         bookingMode,
       })
-      if (!result?.ok && !result?.reservation) {
-        throw new Error((result as { error?: string })?.error || 'Could not create reservation')
+      if (!result?.ok || !result.reservation?.id) {
+        throw new Error('Could not create reservation')
       }
       const reservation = result.reservation
-      const reservationId = reservation?.id ?? result.id
-      if (user?.id) {
-        await legalAcceptanceService.recordAcceptance({
-          userId: user.id,
-          scope: 'short_stay_booking',
-          policySlugs: ACCEPTANCE_SCOPES.short_stay_booking.policySlugs,
-          policyVersion: LEGAL_POLICY_VERSION,
-        })
-      }
+      const reservationId = reservation.id
 
       clearJourneyDraft(listing.id, 'booking', user?.id)
 
@@ -181,7 +192,8 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
             id="stay-checkin"
             type="date"
             value={checkIn}
-            onChange={(e) => setCheckIn(e.target.value)}
+            min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)}
+            onChange={(e) => { const date = e.target.value; setCheckIn(date); if (checkOut && checkOut <= date) setCheckOut(''); setMessage('') }}
             className="mt-1 w-full bg-transparent text-sm outline-none"
           />
         </div>
@@ -191,8 +203,8 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
             id="stay-checkout"
             type="date"
             value={checkOut}
-            min={checkIn}
-            onChange={(e) => setCheckOut(e.target.value)}
+            min={checkIn ? nextStayDate(checkIn) : new Date(Date.now() - new Date().getTimezoneOffset() * 60000 + 86400000).toISOString().slice(0, 10)}
+            onChange={(e) => { setCheckOut(e.target.value); setMessage('') }}
             className="mt-1 w-full bg-transparent text-sm outline-none"
           />
         </div>
@@ -213,9 +225,11 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
 
       {nights > 0 && (
         <p className="mt-3 text-sm text-ink-secondary">
-          {nights} night{nights > 1 ? 's' : ''} · {formatPrice(total, { currency: listing.currency || undefined })} total
+          {nights} night{nights > 1 ? 's' : ''} × {formatPrice(nightlyRate, { currency: listing.currency || undefined })} = {formatPrice(total, { currency: listing.currency || undefined })} nightly subtotal
         </p>
       )}
+
+      {nights > 0 ? <p className="mt-1 text-xs text-ink-muted">Taxes, service charges and applicable deposits are shown before checkout. This subtotal is not the final amount due.</p> : null}
 
       {listing.organizationId ? (
         <ListingTrustStrip
@@ -235,20 +249,18 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
         className="mt-4"
       />
 
-      {listing.jurisdictionId && !canBookStay(kyc, listing.jurisdictionId) ? (
-        <div className="mt-4">
-          <KycBanner kyc={kyc} />
-        </div>
-      ) : null}
-
-      {availability.length > 0 && (
-        <p className="mt-2 text-xs text-ink-secondary">{availability.length} dates available this month</p>
+      {availabilityError ? (
+        <p className="mt-2 text-xs text-destructive" role="alert">Availability check failed. Refresh the property before booking.</p>
+      ) : availability.some((row) => row.is_available === false) ? (
+        <p className="mt-2 text-xs text-ink-secondary">Some dates are blocked. Confirm your exact dates before proceeding.</p>
+      ) : (
+        <p className="mt-2 text-xs text-ink-muted">Calendar availability is subject to confirmation.</p>
       )}
 
       <button
         type="button"
         onClick={handleBook}
-        disabled={status === 'loading' || status === 'success' || !bookingTermsAccepted}
+        disabled={status === 'loading' || status === 'success' || !bookingTermsAccepted || nights < 1 || availabilityError || hasBlockedSelection()}
         className="mt-4 w-full rounded-lg bg-brand-accent py-3.5 text-base font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
       >
         {status === 'loading'
@@ -258,7 +270,7 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
             : 'Continue to checkout'}
       </button>
 
-      <p className="mt-3 text-center text-sm text-ink-secondary">{message || t('common.notChargedYet')}</p>
+      <p role={message ? 'alert' : 'status'} aria-live="polite" className="mt-3 text-center text-sm text-ink-secondary">{message || t('common.notChargedYet')}</p>
     </div>
   )
 }

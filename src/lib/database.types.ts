@@ -2958,6 +2958,7 @@ export type Database = {
           region: string
           square_meters: number | null
           subdivision_code: string | null
+          virtual_tour_url: string | null
           updated_at: string | null
         }
         Insert: {
@@ -2984,6 +2985,7 @@ export type Database = {
           region: string
           square_meters?: number | null
           subdivision_code?: string | null
+          virtual_tour_url?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -3010,6 +3012,7 @@ export type Database = {
           region?: string
           square_meters?: number | null
           subdivision_code?: string | null
+          virtual_tour_url?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -4931,6 +4934,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      search_public_listing_ids: {
+        Args: {
+          p_location?: string | null
+          p_bounds?: Json | null
+          p_price_min?: number | null
+          p_price_max?: number | null
+          p_bedrooms?: number | null
+          p_bathrooms?: number | null
+          p_property_type?: string | null
+          p_listing_type?: string | null
+          p_organization_slug?: string | null
+          p_region?: string | null
+          p_country?: string | null
+          p_sort?: string | null
+          p_verified_only?: boolean | null
+          p_featured_only?: boolean | null
+          p_amenities?: string[] | null
+          p_currency?: string | null
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
       accept_organization_invitation: {
         Args: { invitation_id: string }
         Returns: {

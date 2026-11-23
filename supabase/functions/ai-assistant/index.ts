@@ -23,7 +23,7 @@ const FAQ_ENTRIES: Array<{ keywords: string[]; answer: string }> = [
   {
     keywords: ["escrow", "hold", "release"],
     answer:
-      "Escrow holds your payment securely until agreed milestones are met. Funds stay in your BaytMiftah wallet escrow balance and are released when both sides confirm the step.",
+      "BaytMiftah is a property marketplace, not a bank or custodian, and does not hold customer money. When payment or escrow features are available, an external licensed provider handles funds under its own terms. Check the payment provider, fees and conditions before paying.",
   },
   {
     keywords: ["kyc", "verify", "verification", "identity"],

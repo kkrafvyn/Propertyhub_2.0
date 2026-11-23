@@ -48,7 +48,7 @@ describe("api authorization — platform admin separation", () => {
   it("does not route regular users to /admin after authentication", () => {
     expect(
       resolvePostAuthRedirect({ user_metadata: { role: "agent" } }, regularWorkspaceUser),
-    ).toBe("/workspace");
+    ).toBe("/app");
     expect(
       resolvePostAuthRedirect({ user_metadata: { role: "consumer" } }, regularWorkspaceUser),
     ).toBe("/app");

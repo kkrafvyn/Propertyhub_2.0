@@ -554,6 +554,18 @@ export async function reconcilePayAngelsPayment(input: {
     throw new HttpError(404, "Property transaction not found");
   }
 
+  // Verify provider response belongs to the exact local transaction.
+  // Amount alone is not evidence: the same numeric amount could be charged
+  // in another currency or against another reference.
+  if (input.verifiedTransaction.reference &&
+      input.verifiedTransaction.reference !== input.reference) {
+    throw new HttpError(409, "Payment provider reference mismatch");
+  }
+  if (input.verifiedTransaction.currency &&
+      input.verifiedTransaction.currency.toUpperCase() !== transaction.currency.toUpperCase()) {
+    throw new HttpError(409, "Payment provider currency mismatch");
+  }
+
   assertPayAngelsAmountMatch({
     expectedMinor: transaction.amount_minor,
     providerAmountMinor: Number(input.verifiedTransaction.amount || 0),
@@ -561,6 +573,19 @@ export async function reconcilePayAngelsPayment(input: {
   });
 
   const normalizedStatus = normalizeStatus(input.verifiedTransaction.status);
+  // Refund and completed-payment states must not be silently downgraded by a
+  // late/stale provider notification or by a later manual verification.
+  if ((transaction.status === "success" && normalizedStatus !== "success") ||
+      ["reversed", "reversal_pending"].includes(transaction.status)) {
+    const { data: existingReceipt } = await admin.from("transaction_receipts")
+      .select("*").eq("transaction_id", transaction.id).maybeSingle();
+    return {
+      transaction,
+      receipt: existingReceipt || null,
+      blockchainRecord: null,
+      alreadyProcessed: true,
+    };
+  }
   const providerTransactionId =
     input.verifiedTransaction.id !== undefined
       ? String(input.verifiedTransaction.id)

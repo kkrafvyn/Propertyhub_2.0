@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import { ChevronLeft, ChevronRight, Heart, Star, ShieldCheck } from "lucide-react";
 import type { MarketplaceListingCard } from "./listing-mappers";
@@ -28,7 +29,8 @@ export function ListingCard({
   compact = false,
 }: ListingCardProps) {
   const photos = getListingPhotos(listing);
-  const [photoIndex, setPhotoIndex] = useListingPhotoCarousel(photos);
+  const [paused, setPaused] = useState(false);
+  const [photoIndex, setPhotoIndex] = useListingPhotoCarousel(photos, undefined, paused);
 
   const widthClass = compact
     ? "w-[min(100%,320px)] shrink-0 sm:w-[300px] lg:w-[320px]"
@@ -37,14 +39,30 @@ export function ListingCard({
   const listingTypeLabel = listingTypeLabels[listing.listingType];
 
   return (
-    <Link to={`/property/${listing.id}`} className={`marketplace-property-card group block ${widthClass}`}>
+    <article
+      className={`marketplace-property-card group relative block ${widthClass}`}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setPaused(false);
+        }
+      }}
+    >
       <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-listing)] bg-surface-subtle transition-all duration-300">
+        {photos.length === 0 && (
+          <div className="flex h-full w-full items-center justify-center bg-surface-subtle px-4 text-center text-sm text-ink-muted" role="img" aria-label="Property photo unavailable">
+            Photo unavailable
+          </div>
+        )}
         {photos.map((src, i) => (
           <img
             key={`${src}-${i}`}
             src={src}
-            alt={listing.title}
-            loading={i === 0 ? "lazy" : undefined}
+            alt={i === photoIndex ? listing.title : ""}
+            aria-hidden={i !== photoIndex}
+            loading="lazy"
             className={`absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-[1.025] ${
               i === photoIndex ? "opacity-100" : "opacity-0"
             }`}
@@ -58,9 +76,13 @@ export function ListingCard({
         {listing.featured && (
           <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-surface/95 dark:bg-surface/90 backdrop-blur-md px-3 py-1 text-xs font-semibold text-ink shadow-xs border border-surface-border/60">
             <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
-            Guest favourite
+            Featured listing
           </span>
         )}
+
+        {listing.has3DTour ? (
+          <span className="absolute right-3 bottom-14 rounded-full bg-primary/90 px-2.5 py-1 text-[11px] font-semibold text-primary-foreground shadow-sm">3D tour</span>
+        ) : null}
 
         {listing.marketLabel ? (
           <span className="absolute left-3 bottom-14 max-w-[85%] truncate rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-semibold text-white border border-white/15 shadow-xs">
@@ -76,7 +98,7 @@ export function ListingCard({
               e.stopPropagation();
               onToggleSave(listing.id);
             }}
-            className="absolute right-3 top-3 rounded-full p-2.5 transition-all duration-200 hover:scale-110 active:scale-90 bg-black/40 hover:bg-black/65 backdrop-blur-md border border-white/25 shadow-xs cursor-pointer"
+            className="absolute right-3 top-3 z-20 rounded-full p-2.5 transition-all duration-200 hover:scale-110 active:scale-90 bg-black/40 hover:bg-black/65 backdrop-blur-md border border-white/25 shadow-xs cursor-pointer"
             aria-label={saved ? "Remove from saved" : "Save property"}
           >
             <Heart
@@ -101,7 +123,7 @@ export function ListingCard({
               e.stopPropagation();
               onToggleCompare(listing.id);
             }}
-            className={`absolute bottom-3 right-3 rounded-full border px-3 py-1 text-xs font-semibold shadow-xs backdrop-blur-md transition-all duration-200 active:scale-95 cursor-pointer ${
+            className={`absolute bottom-3 right-3 z-20 rounded-full border px-3 py-1 text-xs font-semibold shadow-xs backdrop-blur-md transition-all duration-200 active:scale-95 cursor-pointer ${
               compared
                 ? "bg-white text-ink border-white shadow-md scale-105"
                 : "border-white/30 bg-black/45 text-white hover:bg-black/70 hover:scale-105"
@@ -120,7 +142,7 @@ export function ListingCard({
                 e.stopPropagation();
                 setPhotoIndex((i) => (i === 0 ? photos.length - 1 : i - 1));
               }}
-              className="absolute left-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-white opacity-0 shadow-md backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-black/75 group-hover:opacity-100 cursor-pointer"
+              className="absolute left-2.5 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-white opacity-100 shadow-md backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-black/75 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 cursor-pointer"
               aria-label="Previous photo"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -132,14 +154,14 @@ export function ListingCard({
                 e.stopPropagation();
                 setPhotoIndex((i) => (i === photos.length - 1 ? 0 : i + 1));
               }}
-              className="absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-white opacity-0 shadow-md backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-black/75 group-hover:opacity-100 cursor-pointer"
+              className="absolute right-2.5 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/50 text-white opacity-100 shadow-md backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-black/75 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 cursor-pointer"
               aria-label="Next photo"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
 
             {/* Pagination dots indicator */}
-            <div className="absolute bottom-2.5 left-1/2 flex -translate-x-1/2 items-center gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <div aria-hidden="true" className="pointer-events-none absolute bottom-2.5 left-1/2 flex -translate-x-1/2 items-center gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
               {photos.slice(0, 5).map((_, i) => (
                 <span
                   key={i}
@@ -155,7 +177,7 @@ export function ListingCard({
 
       <div className="marketplace-property-info space-y-2">
         <p className="marketplace-property-price">{listing.priceLabel}</p>
-        {listing.verified && <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary"><ShieldCheck className="h-4 w-4" aria-hidden="true" /> Verified property</span>}
+        {listing.verified && <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary"><ShieldCheck className="h-4 w-4" aria-hidden="true" /> Verified organization</span>}
         <div className="flex items-start justify-between gap-2">
           <h3 className="truncate text-base font-semibold text-ink group-hover:text-primary transition-colors">
             {listing.location || listing.title}
@@ -173,7 +195,12 @@ export function ListingCard({
           {listingTypeLabel ? ` · ${listingTypeLabel}` : ""}
         </p>
       </div>
-    </Link>
+      <Link
+        to={`/property/${listing.id}`}
+        aria-label={`View ${listing.title} in ${listing.location || "the marketplace"}`}
+        className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+      />
+    </article>
   );
 }
 
