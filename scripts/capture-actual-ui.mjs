@@ -13,6 +13,7 @@ const server = spawn("npm", ["run", "dev", "--", "--host", "127.0.0.1", "--port"
   env: { ...process.env, VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || "https://test.supabase.co",
     VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || "test-anon-key" },
   stdio: ["ignore", "pipe", "pipe"],
+  detached: true,
 });
 server.stdout.on("data", (data) => process.stdout.write(String(data)));
 server.stderr.on("data", (data) => process.stderr.write(String(data)));
@@ -48,7 +49,8 @@ try {
     });
     const page = await context.newPage();
     page.on("pageerror", (err) => console.warn(`Browser runtime error on ${view.route}: ${err.message}`));
-    const response = await page.goto(base + view.route, { waitUntil: "domcontentloaded", timeout: 45000 });
+    console.log(`Opening ${view.name} (${view.route})`);
+    const response = await page.goto(base + view.route, { waitUntil: "domcontentloaded", timeout: 30000 });
     if (!response || response.status() >= 400) throw new Error(`HTTP ${response?.status()} on ${view.route}`);
     await page.waitForTimeout(view.route.includes("visual-tour-preview") ? 1000 : 2300);
     if (view.route.includes("visual-tour-preview")) {
@@ -63,5 +65,9 @@ try {
   }
 } finally {
   await browser?.close();
-  server.kill("SIGTERM");
+  // npm delegates to a child Vite process. Kill the whole process group,
+  // otherwise inherited stdout pipes keep the screenshot runner alive.
+  if (server.pid) {
+    try { process.kill(-server.pid, "SIGTERM"); } catch { server.kill("SIGTERM"); }
+  }
 }
