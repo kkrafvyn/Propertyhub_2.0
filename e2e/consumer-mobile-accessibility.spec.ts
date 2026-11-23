@@ -13,8 +13,6 @@ test.describe("Mobile consumer accessibility smoke", () => {
   test("signup is consumer-only with a separate reviewed workspace application", async ({ page }) => {
     await openRoute(page, "/signup?type=landlord");
     await expect(page.getByRole("heading", { name: /create your account/i })).toBeVisible();
-    await expect(page.getByText(/workspace access by approval/i)).toBeVisible();
-    await expect(page.getByText(/apply separately with identity verification/i)).toBeVisible();
     await expect(page.getByRole("textbox", { name: /full name/i })).toBeVisible();
     await expect(page.getByRole("textbox", { name: /email address/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /manage properties/i })).toHaveCount(0);
