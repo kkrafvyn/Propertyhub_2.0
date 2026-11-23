@@ -63,7 +63,7 @@ export function resolvePostAuthRedirect(
 
   if (safeExplicit && safeExplicit !== "/app") {
     if (typeof window !== "undefined" && isElectron() && isDesktopConsumerOnlyRoute(safeExplicit)) {
-      return resolveDesktopProfessionalHome(user as User, profile);
+      return resolveDesktopProfessionalHome(user as User, profile, { hasOrgMembership: context?.hasOrgMembership });
     }
     return safeExplicit;
   }
@@ -83,7 +83,7 @@ export function resolvePostAuthRedirect(
   const metadataRole = getMetadataRole(user.app_metadata);
 
   if (typeof window !== "undefined" && isElectron()) {
-    return resolveDesktopProfessionalHome(user as User, profile);
+    return resolveDesktopProfessionalHome(user as User, profile, { hasOrgMembership: context?.hasOrgMembership });
   }
 
   if (hasPlatformConsoleAccess(profile) || isFullAdminRole(metadataRole)) {
