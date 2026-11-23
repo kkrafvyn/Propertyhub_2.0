@@ -17,7 +17,7 @@ export function MobileBookingQuickFilters({ searchBaseUrl }: { searchBaseUrl: st
   const options: Array<{ label: string; values: Record<string, string>; icon: LucideIcon }> = [
     { label: "2+ bedrooms", values: { bedrooms: "2" }, icon: BedDouble },
     { label: "Verified organizations", values: { verified: "1" }, icon: ShieldCheck },
-    { label: "Lowest price", values: { sort: "price_asc" }, icon: ArrowDownWideNarrow },
+    { label: "Low price by currency", values: { sort: "price_asc" }, icon: ArrowDownWideNarrow },
     { label: "Explore map", values: { view: "map" }, icon: Map },
   ];
 
