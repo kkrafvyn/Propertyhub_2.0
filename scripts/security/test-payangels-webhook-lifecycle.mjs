@@ -31,6 +31,7 @@ async function finish(id, token, succeeded) {
 
 try {
   await db.exec(`
+    CREATE ROLE anon;
     CREATE ROLE service_role;
     CREATE ROLE authenticated;
     CREATE SCHEMA auth;
