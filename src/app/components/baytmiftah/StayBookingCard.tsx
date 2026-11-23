@@ -13,7 +13,6 @@ import { legalAcceptanceService } from '../../../lib/legal-acceptance.service'
 import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from '../../../lib/legal-config'
 import { canBookStay } from '../../../lib/kyc-gate.service'
 import { clientIntegrations } from '../../../lib/integrations'
-import KycBanner from './KycBanner'
 import { ListingTrustStrip } from '../ListingTrustStrip'
 import { clearJourneyDraft, readJourneyDraft, saveJourneyDraft } from '../../../lib/journey-draft-storage'
 import { nextStayDate, stayNights } from '../../lib/baytmiftah/stay-date-rules'
@@ -249,12 +248,6 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
         id="stay-booking-terms"
         className="mt-4"
       />
-
-      {listing.jurisdictionId && !canBookStay(kyc, listing.jurisdictionId) ? (
-        <div className="mt-4">
-          <KycBanner kyc={kyc} />
-        </div>
-      ) : null}
 
       {availabilityError ? (
         <p className="mt-2 text-xs text-destructive" role="alert">Availability check failed. Refresh the property before booking.</p>
