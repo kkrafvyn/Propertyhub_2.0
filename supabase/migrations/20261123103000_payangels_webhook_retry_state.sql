@@ -27,7 +27,7 @@ DECLARE
   v_token UUID := gen_random_uuid();
   v_current public.payangels_webhook_processing%ROWTYPE;
 BEGIN
-  IF current_user <> 'service_role' OR p_event_id IS NULL OR length(p_event_id) NOT BETWEEN 1 AND 250
+  IF auth.role() IS DISTINCT FROM 'service_role' OR p_event_id IS NULL OR length(p_event_id) NOT BETWEEN 1 AND 250
       OR p_payload_sha256 !~ '^[a-f0-9]{64}$' THEN
     RAISE EXCEPTION 'Invalid webhook claim' USING ERRCODE='42501';
   END IF;
@@ -69,7 +69,7 @@ CREATE OR REPLACE FUNCTION public.finish_payangels_webhook_event(
 RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
 AS $$
 BEGIN
-  IF current_user <> 'service_role' OR p_lease_token IS NULL THEN
+  IF auth.role() IS DISTINCT FROM 'service_role' OR p_lease_token IS NULL THEN
     RAISE EXCEPTION 'Webhook completion denied' USING ERRCODE='42501';
   END IF;
   UPDATE public.payangels_webhook_processing SET
