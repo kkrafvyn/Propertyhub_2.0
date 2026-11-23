@@ -23,8 +23,13 @@ export function isDesktopAuthRoute(pathname: string): boolean {
 }
 
 /** Accounts allowed to use the workspace-only desktop app (not consumer shoppers). */
-export function isDesktopAllowedUser(user: User | null, profile: AuthProfile): boolean {
+export function isDesktopAllowedUser(
+  user: User | null,
+  profile: AuthProfile,
+  context?: { hasOrgMembership?: boolean },
+): boolean {
   if (!user) return false;
+  if (context?.hasOrgMembership) return true;
 
   const metadataRole = getMetadataRole(user.app_metadata);
   if (hasPlatformConsoleAccess(profile) || isFullAdminRole(metadataRole)) {
@@ -40,12 +45,13 @@ export function isDesktopAllowedUser(user: User | null, profile: AuthProfile): b
 export function resolveDesktopProfessionalHome(
   user: User | null,
   profile: AuthProfile,
+  context?: { hasOrgMembership?: boolean },
 ): string {
   if (!user) {
     return "/login";
   }
 
-  if (!isDesktopAllowedUser(user, profile)) {
+  if (!isDesktopAllowedUser(user, profile, context)) {
     if (!profile) {
       return WORKSPACE_ENTRY_PATH;
     }
@@ -58,7 +64,7 @@ export function resolveDesktopProfessionalHome(
   }
 
   const role = metadataRole || profile?.role;
-  if (isWorkspaceRole(role) || role === "host" || role === "landlord") {
+  if (context?.hasOrgMembership || isWorkspaceRole(role) || role === "host" || role === "landlord") {
     const lastOrg = getDesktopLastOrg();
     if (lastOrg) {
       return getWorkspaceRoute(lastOrg, "my-work");
