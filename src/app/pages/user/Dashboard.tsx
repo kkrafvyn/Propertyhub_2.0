@@ -97,6 +97,7 @@ import { AppSettingsPanels } from "../../components/baytmiftah/AppSettings";
 import ProfileKycCard from "../../components/baytmiftah/ProfileKycCard";
 import { KycVerificationPanel } from "../../components/baytmiftah/KycVerificationPanel";
 import KycBanner from "../../components/baytmiftah/KycBanner";
+import { shouldShowConsumerKycReminder } from "../../../lib/consumer-kyc-journey";
 import { useMyKyc } from "../../hooks/useMyKyc";
 import { isKycVerified } from "../../lib/baytmiftah/kyc";
 import { ConsumerNotificationPreferences } from "../../components/baytmiftah/ConsumerNotificationPreferences";
@@ -268,6 +269,10 @@ export function UserDashboard() {
   const selectedConversationId = searchParams.get("conversation");
   const { user, signOut, role } = useAuth();
   const { kyc, verified: kycVerified } = useMyKyc();
+  const showConsumerKycReminder = shouldShowConsumerKycReminder({
+    accountCreatedAt: user?.created_at,
+    kycVerified,
+  });
   const [loading, setLoading] = useState(true);
   const [savedProperties, setSavedProperties] = useState<any[]>([]);
   const [dealCases, setDealCases] = useState<any[]>([]);
@@ -1545,7 +1550,7 @@ export function UserDashboard() {
 
   const renderOverview = () => (
     <div className="space-y-8">
-      {!kycVerified ? <KycBanner kyc={kyc} /> : null}
+      {showConsumerKycReminder ? <KycBanner kyc={kyc} mode="reminder" /> : null}
       {resumeListingDrafts.length > 0 ? (
         <Card className="app-surface-card p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-primary/25">
           <div>
@@ -2071,7 +2076,7 @@ export function UserDashboard() {
           ) : section === "payments" || section === "wallet" ? (
             renderSectionShell(
               <>
-                {!kycVerified ? <KycBanner kyc={kyc} /> : null}
+                {showConsumerKycReminder ? <KycBanner kyc={kyc} mode="reminder" /> : null}
                 {walletSection}
               </>,
             )
