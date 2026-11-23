@@ -126,14 +126,6 @@ export function Signup() {
         </p>
       }
     >
-      <div className="mb-5 rounded-xl border border-white/20 bg-white/5 p-4 text-white/90 lg:border-surface-border lg:bg-surface-subtle lg:text-ink-secondary">
-        <p className="text-sm font-medium">One account. Workspace access by approval.</p>
-        <p className="mt-1 text-xs leading-relaxed">
-          Sign up to browse, save and enquire about properties. To manage or advertise
-          properties, apply separately with identity verification. BaytMiftah reviews
-          workspace applications before access is granted.
-        </p>
-      </div>
       <OAuthButtons
         onGoogle={() => void handleOAuthSignIn("google")}
         onApple={() => void handleOAuthSignIn("apple")}
