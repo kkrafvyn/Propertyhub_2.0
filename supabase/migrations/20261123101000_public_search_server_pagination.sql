@@ -70,8 +70,20 @@ BEGIN
         p.latitude IS NOT NULL AND p.longitude IS NOT NULL
         AND p.latitude >= (p_bounds->>'south')::DOUBLE PRECISION
         AND p.latitude <= (p_bounds->>'north')::DOUBLE PRECISION
-        AND p.longitude >= (p_bounds->>'west')::DOUBLE PRECISION
-        AND p.longitude <= (p_bounds->>'east')::DOUBLE PRECISION
+        AND (
+          (
+            (p_bounds->>'west')::DOUBLE PRECISION <= (p_bounds->>'east')::DOUBLE PRECISION
+            AND p.longitude >= (p_bounds->>'west')::DOUBLE PRECISION
+            AND p.longitude <= (p_bounds->>'east')::DOUBLE PRECISION
+          )
+          OR (
+            (p_bounds->>'west')::DOUBLE PRECISION > (p_bounds->>'east')::DOUBLE PRECISION
+            AND (
+              p.longitude >= (p_bounds->>'west')::DOUBLE PRECISION
+              OR p.longitude <= (p_bounds->>'east')::DOUBLE PRECISION
+            )
+          )
+        )
       ))
       AND NOT EXISTS (
         SELECT 1 FROM unnest(coalesce(p_amenities, ARRAY[]::TEXT[])) AS requested(amenity)
