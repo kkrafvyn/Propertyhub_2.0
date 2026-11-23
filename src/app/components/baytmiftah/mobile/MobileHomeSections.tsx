@@ -259,6 +259,9 @@ export function MobileHomeListingCard({
             </div>
           )}
           <span className="absolute bottom-3 left-3 rounded-full bg-surface/95 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-sm">{transactionLabel}</span>
+          {listing.has3DTour && (
+            <span className="absolute bottom-3 right-3 rounded-full bg-primary/95 px-2.5 py-1 text-[11px] font-semibold text-primary-foreground shadow-sm">3D tour</span>
+          )}
           {displayBadge && (
             <span
               className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white ${
