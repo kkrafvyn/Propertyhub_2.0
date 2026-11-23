@@ -39,7 +39,6 @@ interface AuthContextType {
     email: string,
     password: string,
     fullName: string,
-    accountType?: "user" | "landlord",
   ) => Promise<{ user: User | null }>
   signIn: (email: string, password: string) => Promise<void>
   signInWithPhoneOtp: (phone: string) => Promise<void>
@@ -304,19 +303,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
     fullName: string,
-    accountType: "user" | "landlord" = "user",
   ) => {
     try {
       setError(null)
-      const appRole = accountType === "landlord" ? "host" : "consumer"
+      // Public signup never grants a host/workspace role. Workspace enrollment
+      // and manual KYC approval are separate database-controlled processes.
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
-            role: appRole,
-            account_type: accountType,
+            role: "consumer",
+            account_type: "user",
           },
         },
       })
