@@ -27,6 +27,7 @@ import { ghanaMarketService } from "../../../lib/ghana-market.service";
 import { getPropertyCoverImage, getPropertyMediaItems } from "../../../lib/property-media";
 import { listingQualityService } from "../../../lib/listing-quality.service";
 import { propertyMediaService } from "../../../lib/property-media.service";
+import { normalizeMatterportTourUrl } from "../../../lib/virtual-tour";
 import { listingService } from "../../../lib/listing.service";
 import { propertyService } from "../../../lib/property.service";
 import { PropertyJurisdictionFields } from "../../components/compliance/PropertyJurisdictionFields";
@@ -64,6 +65,7 @@ type ListingDraft = {
   bathrooms: string;
   squareMeters: string;
   description: string;
+  virtualTourUrl: string;
   amenities: string;
   listingType: ListingType;
   price: string;
@@ -119,6 +121,7 @@ function createDraft(listing: any): ListingDraft {
     squareMeters:
       listing.property?.square_meters != null ? String(listing.property.square_meters) : "",
     description: listing.property?.description || "",
+    virtualTourUrl: listing.property?.virtual_tour_url || "",
     amenities: Array.isArray(listing.property?.amenities)
       ? listing.property.amenities.join(", ")
       : "",
@@ -161,6 +164,7 @@ function isDraftDirty(listing: any, draft?: ListingDraft) {
     original.bathrooms !== draft.bathrooms ||
     original.squareMeters !== draft.squareMeters ||
     original.description !== draft.description ||
+    original.virtualTourUrl !== draft.virtualTourUrl ||
     original.amenities !== draft.amenities ||
     original.listingType !== draft.listingType ||
     original.price !== draft.price ||
@@ -314,6 +318,11 @@ export function WorkspaceListings({
       return;
     }
 
+    if (draft.virtualTourUrl.trim() && !normalizeMatterportTourUrl(draft.virtualTourUrl)) {
+      toast.error("Enter a valid Matterport 3D tour link, or leave the field empty.");
+      return;
+    }
+
     if (!draft.price || Number.isNaN(Number(draft.price))) {
       toast.error("Enter a valid price before saving.");
       return;
@@ -366,6 +375,7 @@ export function WorkspaceListings({
         bathrooms: draft.bathrooms ? Number(draft.bathrooms) : null,
         square_meters: draft.squareMeters ? Number(draft.squareMeters) : null,
         description: draft.description.trim() || null,
+        virtual_tour_url: normalizeMatterportTourUrl(draft.virtualTourUrl),
         amenities: normalizeAmenities(draft.amenities),
       });
 
@@ -1108,6 +1118,17 @@ export function WorkspaceListings({
                         />
                       </div>
 
+                      <div className="rounded-2xl border border-surface-border bg-surface-subtle p-4">
+                        <Input
+                          label="Interactive 3D tour (Matterport link)"
+                          type="url"
+                          value={draft?.virtualTourUrl || ""}
+                          onChange={(event) => updateDraft(listing.id, "virtualTourUrl", event.target.value)}
+                          placeholder="https://my.matterport.com/show/?m=AbCdEf12345"
+                        />
+                        <p className="mt-2 text-xs text-muted-foreground">Paste a published Matterport 3D scan. It will appear on the property page only when valid. Do not upload iframe code or ordinary photos here.</p>
+                        {draft?.virtualTourUrl && !normalizeMatterportTourUrl(draft.virtualTourUrl) && <p role="alert" className="mt-1 text-xs text-destructive">That is not a supported Matterport tour URL.</p>}
+                      </div>
                       <div>
                         <Input
                           label="Amenities"
