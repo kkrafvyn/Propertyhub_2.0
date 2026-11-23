@@ -64,10 +64,11 @@ export function isBusinessWebUser(user: AuthUser, profile: AuthProfile) {
   if (!user) return false;
   if (hasPlatformConsoleAccess(profile)) return false;
 
-  const metadataRole = getMetadataRole(user.user_metadata) || getMetadataRole(user.app_metadata);
+  // Only server-controlled claims may classify a professional account.
+  // Metadata supplied through auth.updateUser() must never grant privileges.
+  const metadataRole = getMetadataRole(user.app_metadata);
   const role = metadataRole || profile?.role;
-  const accountType =
-    getAccountType(user.user_metadata) || getAccountType(user.app_metadata);
+  const accountType = getAccountType(user.app_metadata);
 
   if (accountType === "landlord") return true;
   if (isWorkspaceRole(role) || isProfessionalRole(role)) return true;
