@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Loader2, Eye, EyeOff, Check } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -7,17 +7,12 @@ import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import { AuthShell, AuthDivider, OAuthButtons, PageMeta } from "../../components/baytmiftah";
 import { LegalAcceptanceCheckbox } from "../../components/legal/LegalAcceptanceCheckbox";
-import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION, LEGAL_VERSION_KEY, type LegalAcceptanceScope } from "../../../lib/legal-config";
+import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION, LEGAL_VERSION_KEY } from "../../../lib/legal-config";
 import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
 import { validatePassword } from "../../../lib/security/password-policy";
 import { supabase } from "../../../lib/supabase";
 
-type SignupAccountType = "user" | "landlord";
-
 export function Signup() {
-  const [searchParams] = useSearchParams();
-  const accountType: SignupAccountType =
-    searchParams.get("type") === "landlord" ? "landlord" : "user";
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -34,19 +29,10 @@ export function Signup() {
   const navigate = useNavigate();
   const { signUp, signInWithOAuth, user } = useAuth();
 
-  const oauthRedirectUrl = useMemo(() => {
-    const next = accountType === "landlord" ? "/workspace" : "/app";
-    return `${window.location.origin}/login?next=${encodeURIComponent(next)}`;
-  }, [accountType]);
-
-  const legalScope: LegalAcceptanceScope =
-    accountType === "landlord" ? "signup_host" : "signup_consumer";
-
-  // A consumer's acceptance must not silently apply to landlord/agency terms
-  // when switching the account-purpose selector on the same route.
-  useEffect(() => {
-    setTermsAccepted(false);
-  }, [legalScope]);
+  // Account creation is always for a consumer. Workspace status is granted only
+  // through the separately reviewed identity/KYC and enrollment process.
+  const oauthRedirectUrl = `${window.location.origin}/login?next=${encodeURIComponent("/app")}`;
+  const legalScope = "signup_consumer" as const;
 
   useEffect(() => {
     if (user) {
@@ -100,7 +86,6 @@ export function Signup() {
         formData.email,
         formData.password,
         formData.fullName,
-        accountType,
       );
       if (user?.id) {
         const { data: sessionData } = await supabase.auth.getSession();
@@ -115,11 +100,7 @@ export function Signup() {
         }
       }
       toast.success("Account created successfully. Check your email to verify.");
-      navigate("/login", {
-        state: {
-          from: accountType === "landlord" ? "/workspace" : "/app",
-        },
-      });
+      navigate("/login", { state: { from: "/app" } });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Registration failed");
     } finally {
@@ -145,19 +126,13 @@ export function Signup() {
         </p>
       }
     >
-      <div className="mb-5 space-y-2">
-        <p className="text-sm font-medium text-white lg:text-foreground">I’m signing up to</p>
-        <div className="grid grid-cols-2 gap-2" role="group" aria-label="Account purpose">
-          <Link to="/signup" aria-current={accountType === "user" ? "page" : undefined}
-            className={`flex min-h-11 items-center justify-center rounded-xl border px-3 py-2 text-sm font-semibold ${accountType === "user" ? "border-white bg-white text-primary lg:border-primary lg:bg-primary lg:text-primary-foreground" : "border-white/30 text-white lg:border-surface-border lg:text-ink"}`}>
-            Find a property
-          </Link>
-          <Link to="/signup?type=landlord" aria-current={accountType === "landlord" ? "page" : undefined}
-            className={`flex min-h-11 items-center justify-center rounded-xl border px-3 py-2 text-sm font-semibold ${accountType === "landlord" ? "border-white bg-white text-primary lg:border-primary lg:bg-primary lg:text-primary-foreground" : "border-white/30 text-white lg:border-surface-border lg:text-ink"}`}>
-            Manage properties
-          </Link>
-        </div>
-        <p className="text-xs text-white/80 lg:text-ink-secondary">{accountType === "landlord" ? "Set up a landlord or agency workspace after creating your account." : "Save homes, request viewings and contact property teams."}</p>
+      <div className="mb-5 rounded-xl border border-white/20 bg-white/5 p-4 text-white/90 lg:border-surface-border lg:bg-surface-subtle lg:text-ink-secondary">
+        <p className="text-sm font-medium">One account. Workspace access by approval.</p>
+        <p className="mt-1 text-xs leading-relaxed">
+          Sign up to browse, save and enquire about properties. To manage or advertise
+          properties, apply separately with identity verification. BaytMiftah reviews
+          workspace applications before access is granted.
+        </p>
       </div>
       <OAuthButtons
         onGoogle={() => void handleOAuthSignIn("google")}
