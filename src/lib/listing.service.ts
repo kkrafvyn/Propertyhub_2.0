@@ -1,11 +1,10 @@
-import { withinSearchBounds, type SearchBounds } from "./consumer-discovery";
-import { matchesMarketplaceAmenities } from "./marketplace-amenities";
+import type { SearchBounds } from "./consumer-discovery";
 import { supabase } from "./supabase";
 import type { Database } from "./database.types";
 import { normalizePropertyCategory } from "./property-category";
 import { propertyService } from "./property.service";
 import { ensureEstateForPropertyId } from "./estate-property-link.service";
-import { propertyMatchesGhanaRegion } from "./ghana-regions";
+import { getGhanaRegion } from "./ghana-regions";
 import { propertyMediaService } from "./property-media.service";
 import { listingQualityService, type ListingQualityReport } from "./listing-quality.service";
 import { validatePropertyLocationForPublish } from "./property-jurisdiction-validation";
@@ -142,84 +141,68 @@ export const listingService = {
       verifiedOnly?: boolean;
       featuredOnly?: boolean;
       amenities?: string[];
+      currency?: string;
     },
     limit = 20,
     offset = 0
   ) {
     const normalizedPropertyType = normalizePropertyCategory(filters.propertyType);
+    const region = filters.region && filters.region !== "all"
+      ? getGhanaRegion(filters.region)?.label ?? filters.region.replace(/_/g, " ")
+      : null;
+    const pageLimit = Math.max(1, Math.min(200, Math.trunc(limit)));
+    const pageOffset = Math.max(0, Math.trunc(offset));
 
-    const { data, error } = await supabase
+    // The RPC returns only RLS-authorized public IDs and an exact count.
+    // Fetching one bounded page avoids the default PostgREST row cap and
+    // prevents client-side filtering of stale/incomplete catalog snapshots.
+    const { data, error } = await supabase.rpc("search_public_listing_ids", {
+      p_location: filters.location?.trim() || null,
+      p_bounds: filters.bounds ? { ...filters.bounds } : null,
+      p_price_min: filters.priceMin ?? null,
+      p_price_max: filters.priceMax ?? null,
+      p_bedrooms: filters.bedrooms ?? null,
+      p_bathrooms: filters.bathrooms ?? null,
+      p_property_type: normalizedPropertyType ?? null,
+      p_listing_type: filters.listingType || null,
+      p_organization_slug: filters.organizationSlug || null,
+      p_region: region,
+      p_country: filters.country || null,
+      p_sort: filters.sort || "newest",
+      p_verified_only: filters.verifiedOnly ?? false,
+      p_featured_only: filters.featuredOnly ?? false,
+      p_amenities: filters.amenities || [],
+      p_currency: filters.currency || null,
+      p_limit: pageLimit,
+      p_offset: pageOffset,
+    });
+    if (error) throw error;
+
+    const response = data as { ids?: unknown; total?: unknown } | null;
+    if (!response || !Array.isArray(response.ids) ||
+        !response.ids.every((value) => typeof value === "string" && /^[a-f0-9-]{36}$/i.test(value)) ||
+        typeof response.total !== "number" || !Number.isSafeInteger(response.total) || response.total < 0) {
+      throw new Error("Unexpected server search response");
+    }
+
+    const ids = response.ids as string[];
+    if (!ids.length) return { results: [], total: response.total };
+
+    const { data: pageData, error: pageError } = await supabase
       .from("listings")
       .select(LISTING_SELECT)
       .eq("status", "listed")
       .eq("visibility", "public")
-      .order("published_at", { ascending: false });
+      .in("id", ids);
+    if (pageError) throw pageError;
 
-    if (error) throw error;
-
-    const normalizedLocation = filters.location?.trim().toLowerCase();
-    let filtered = (data || []).filter((listing) => {
-      const property = listing.property as Database["public"]["Tables"]["properties"]["Row"] | null;
-      const organization = listing.organization as { slug?: string; verified?: boolean } | null;
-      const normalizedListingCategory = normalizePropertyCategory(property?.category);
-      const locationHaystack = [property?.address, property?.city, property?.region, property?.country]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      if (filters.bounds && !withinSearchBounds(property?.latitude, property?.longitude, filters.bounds)) return false;
-      if (filters.priceMin != null && listing.price < filters.priceMin) return false;
-      if (filters.priceMax != null && listing.price > filters.priceMax) return false;
-      if (filters.listingType && listing.listing_type !== filters.listingType) return false;
-      if (normalizedPropertyType && normalizedListingCategory !== normalizedPropertyType) return false;
-      if (!matchesMarketplaceAmenities(property?.amenities, filters.amenities)) return false;
-      if (filters.bedrooms && (property?.bedrooms || 0) < filters.bedrooms) return false;
-      if (filters.bathrooms && (property?.bathrooms || 0) < filters.bathrooms) return false;
-      if (normalizedLocation && !locationHaystack.includes(normalizedLocation)) return false;
-      if (
-        filters.region &&
-        filters.region !== "all" &&
-        (property?.country || "").toLowerCase().includes("ghana")
-      ) {
-        if (
-          !propertyMatchesGhanaRegion(
-            property?.region,
-            property?.city,
-            property?.address,
-            filters.region
-          )
-        ) {
-          return false;
-        }
-      } else if (
-        filters.region &&
-        filters.region !== "all" &&
-        !(property?.country || "").toLowerCase().includes("ghana")
-      ) {
-        const regionNeedle = filters.region.replace(/_/g, " ").toLowerCase();
-        if (!locationHaystack.includes(regionNeedle)) return false;
-      }
-      if (filters.organizationSlug && organization?.slug !== filters.organizationSlug) return false;
-      if (filters.verifiedOnly && !organization?.verified) return false;
-      if (filters.featuredOnly && !listing.featured) return false;
-
-      return true;
-    });
-
-    if (filters.sort === "price_asc") {
-      filtered = [...filtered].sort((a, b) => (a.price || 0) - (b.price || 0));
-    } else if (filters.sort === "price_desc") {
-      filtered = [...filtered].sort((a, b) => (b.price || 0) - (a.price || 0));
-    } else if (filters.sort === "featured") {
-      filtered = [...filtered].sort(
-        (a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured))
-      );
-    }
-
-    const page = filtered.slice(offset, offset + limit);
+    const byId = new Map((pageData || []).map((listing) => [listing.id, listing]));
+    const orderedPage = ids.map((id) => byId.get(id)).filter(
+      (listing): listing is NonNullable<typeof listing> => Boolean(listing)
+    );
     return {
-      results: await resolveListingsPropertyMedia(page),
-      total: filtered.length,
+      results: await resolveListingsPropertyMedia(orderedPage),
+      total: response.total,
     };
   },
 
