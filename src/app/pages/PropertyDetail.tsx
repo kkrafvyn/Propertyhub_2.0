@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import { DesktopShell } from "../components/baytmiftah/DesktopShell";
 import { ShareListingButton } from "../components/baytmiftah/ShareListingButton";
 import { SimilarListings } from "../components/baytmiftah/SimilarListings";
+import { Property3DTour } from "../components/baytmiftah/Property3DTour";
 import { mapListingToCard } from "../components/baytmiftah/listing-mappers";
 import MessageHostButton from "../components/baytmiftah/chat/MessageHostButton";
 import StayBookingCard from "../components/baytmiftah/StayBookingCard";
@@ -51,6 +52,7 @@ import { isVideoCallsEnabledForApp } from "../../lib/app-feature-gates";
 import { usePlatformFeatures } from "../context/PlatformFeaturesContext";
 import { listingService } from "../../lib/listing.service";
 import { getPropertyCoverImage, getPropertyImageGallery } from "../../lib/property-media";
+import { normalizeMatterportTourUrl } from "../../lib/virtual-tour";
 import { savedPropertyService } from "../../lib/savedproperty.service";
 import { dealCaseService } from "../../lib/dealcase.service";
 import { messageService } from "../../lib/message.service";
@@ -836,6 +838,12 @@ export function PropertyDetail() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {normalizeMatterportTourUrl(property.virtual_tour_url) ? (
+          <div className="mb-8">
+            <Property3DTour tourUrl={property.virtual_tour_url} propertyName={pageTitle} />
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
