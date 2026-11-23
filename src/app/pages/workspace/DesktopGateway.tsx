@@ -8,7 +8,6 @@ import { isElectron } from "../../../lib/surface-detection";
 import {
   DESKTOP_GATEWAY_FEATURES,
   getDesktopDownloadUrl,
-  isBusinessWebUser,
   markDesktopPromptSeen,
   openBaytMiftahDesktop,
 } from "../../../lib/desktop-gateway";
@@ -19,7 +18,7 @@ import {
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 
 export function DesktopGateway() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   // ?force=1 may open a page, but must never override authorization or plan checks.
   const downloadUrl = useMemo(() => getDesktopDownloadUrl(), []);
@@ -60,10 +59,6 @@ export function DesktopGateway() {
 
   if (!user) {
     return <Navigate to="/login?next=/workspace/desktop" replace />;
-  }
-
-  if (!isBusinessWebUser(user, profile)) {
-    return <Navigate to="/app" replace />;
   }
 
   if (isElectron()) {
