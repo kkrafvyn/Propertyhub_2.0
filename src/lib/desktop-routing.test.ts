@@ -52,6 +52,14 @@ describe("desktop routing", () => {
     )).toBe("/login?reason=business-only");
   });
 
+  it("lets a legitimately approved workspace member reach desktop without mutable role metadata", () => {
+    expect(resolveDesktopProfessionalHome(
+      { user_metadata: { role: "consumer" } } as never,
+      { role: "consumer" },
+      { hasOrgMembership: true },
+    )).toBe("/workspace");
+  });
+
   it("sends platform admins to admin console", () => {
     expect(
       resolveDesktopProfessionalHome(
