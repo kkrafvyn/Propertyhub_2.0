@@ -26,7 +26,7 @@ export function isDesktopAuthRoute(pathname: string): boolean {
 export function isDesktopAllowedUser(user: User | null, profile: AuthProfile): boolean {
   if (!user) return false;
 
-  const metadataRole = getMetadataRole(user.user_metadata) || getMetadataRole(user.app_metadata);
+  const metadataRole = getMetadataRole(user.app_metadata);
   if (hasPlatformConsoleAccess(profile) || isFullAdminRole(metadataRole)) {
     return true;
   }
@@ -52,7 +52,7 @@ export function resolveDesktopProfessionalHome(
     return "/login?reason=business-only";
   }
 
-  const metadataRole = getMetadataRole(user.user_metadata) || getMetadataRole(user.app_metadata);
+  const metadataRole = getMetadataRole(user.app_metadata);
   if (hasPlatformConsoleAccess(profile) || isFullAdminRole(metadataRole)) {
     return "/admin";
   }
