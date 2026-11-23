@@ -3,7 +3,7 @@ import { Capacitor } from "@capacitor/core";
 import { getMobileAppId } from "../../lib/mobile-app";
 import { isElectron } from "../../lib/surface-detection";
 import { isDesktopConsumerOnlyRoute, resolveDesktopProfessionalHome } from "../../lib/desktop-routing";
-import { getMetadataRole, isFullAdminRole, isWorkspaceRole } from "./baytmiftah/roles";
+import { getMetadataRole, isFullAdminRole } from "./baytmiftah/roles";
 import { hasPlatformConsoleAccess } from "../../lib/platform-access";
 
 type AuthUser = User | { user_metadata?: unknown; app_metadata?: unknown } | null;
@@ -79,7 +79,8 @@ export function resolvePostAuthRedirect(
     return "/";
   }
 
-  const metadataRole = getMetadataRole(user.user_metadata) || getMetadataRole(user.app_metadata);
+  // Supabase user_metadata is user-editable. Trust only server-controlled app_metadata.
+  const metadataRole = getMetadataRole(user.app_metadata);
 
   if (typeof window !== "undefined" && isElectron()) {
     return resolveDesktopProfessionalHome(user as User, profile);
@@ -93,11 +94,8 @@ export function resolvePostAuthRedirect(
     return "/workspace";
   }
 
-  const role = metadataRole || profile?.role;
-  if (isWorkspaceRole(role)) {
-    return "/workspace";
-  }
-
+  // A self-declared host/agent role or stale profile role is not proof of
+  // an approved organization membership. Workspace entry handles applications.
   return "/app";
 }
 
