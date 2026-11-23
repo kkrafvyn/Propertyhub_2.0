@@ -96,6 +96,7 @@ export function MapView({
   }, [userLocation]);
 
   const mappable = (listings ?? []).filter((l) => l.lat != null && l.lng != null);
+  const notMappedCount = (listings ?? []).length - mappable.length;
   const mapCenter =
     currentLocation?.lat != null ? [Number(currentLocation.lat), Number(currentLocation.lng)] : center;
   const mapKey = `${Number(mapCenter[0]).toFixed(4)}-${Number(mapCenter[1]).toFixed(4)}-${zoom}`;
@@ -156,6 +157,9 @@ export function MapView({
                 {listing.distanceLabel && (
                   <p className="text-xs font-semibold text-mobile-forest">{listing.distanceLabel} away</p>
                 )}
+                {listing.locationNote && (
+                  <p className="text-xs text-ink-secondary">{listing.locationNote}</p>
+                )}
                 <p className="text-sm text-ink-secondary">{listing.priceLabel}</p>
                 <Link
                   to={`/property/${listing.id}`}
@@ -168,6 +172,11 @@ export function MapView({
           </Marker>
         ))}
         </MapContainer>
+        {notMappedCount > 0 && (
+          <p className="absolute bottom-3 left-3 z-[1000] max-w-[80%] rounded-lg bg-surface/95 p-2 text-xs text-ink-secondary shadow">
+            {notMappedCount} listing{notMappedCount === 1 ? "" : "s"} not shown on map because coordinates are missing. See the list view for all results.
+          </p>
+        )}
         {tileError && <div role="alert" className="absolute inset-x-3 bottom-8 z-[1000] rounded-lg border border-surface-border bg-surface p-3 text-sm text-ink">Some map tiles could not load. Your search is retained.<button type="button" className="ml-2 min-h-11 underline" onClick={() => { setTileError(false); setTileRetry((value) => value + 1); }}>Retry map</button></div>}
         <button
           type="button"
