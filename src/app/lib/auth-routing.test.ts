@@ -26,7 +26,7 @@ describe("resolvePostAuthRedirect", () => {
 
     expect(
       resolvePostAuthRedirect(
-        { user_metadata: { role: "platform_admin" } },
+        { app_metadata: { role: "platform_admin" } },
         null,
       ),
     ).toBe("/admin");
@@ -41,34 +41,19 @@ describe("resolvePostAuthRedirect", () => {
     ).toBe("/admin");
   });
 
-  it("sends workspace roles to /workspace", () => {
-    expect(
-      resolvePostAuthRedirect(
-        { user_metadata: { role: "host" } },
-        null,
-      ),
-    ).toBe("/workspace");
+  it("never treats an editable host, agent or admin claim as approved access", () => {
+    for (const role of ["host", "agent", "agency_manager", "independent_agent", "platform_admin"]) {
+      expect(resolvePostAuthRedirect({ user_metadata: { role } }, null)).toBe("/app");
+    }
+    // Even a trusted historic host role is not proof of current membership.
+    expect(resolvePostAuthRedirect({ app_metadata: { role: "host" } }, null)).toBe("/app");
+  });
 
-    expect(
-      resolvePostAuthRedirect(
-        { user_metadata: { role: "agent" } },
-        null,
-      ),
-    ).toBe("/workspace");
-
-    expect(
-      resolvePostAuthRedirect(
-        { user_metadata: { role: "agency_manager" } },
-        null,
-      ),
-    ).toBe("/workspace");
-
-    expect(
-      resolvePostAuthRedirect(
-        { user_metadata: { role: "independent_agent" } },
-        null,
-      ),
-    ).toBe("/workspace");
+  it("opens workspace only when organization membership is confirmed", () => {
+    expect(resolvePostAuthRedirect(
+      { user_metadata: { role: "consumer" } },
+      null, null, { hasOrgMembership: true },
+    )).toBe("/workspace");
   });
 
   it("defaults consumers to /app", () => {
