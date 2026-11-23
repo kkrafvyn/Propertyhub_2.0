@@ -45,8 +45,7 @@ export default function ProfileKycCard({ variant = 'mobile' }: { variant?: 'mobi
                 </Badge>
               </div>
               <p className="mt-1 text-xs text-muted-foreground leading-relaxed max-w-xl">
-                {t('kycPage.verifiedBody') ||
-                  'Your identity verification is complete. Transaction-specific eligibility and other safeguards may still apply.'}
+                Your identity verification is complete. Transaction-specific eligibility and other safeguards may still apply.
               </p>
             </div>
           </div>
@@ -85,8 +84,7 @@ export default function ProfileKycCard({ variant = 'mobile' }: { variant?: 'mobi
                 </Badge>
               </div>
               <p className="mt-1 text-xs text-muted-foreground leading-relaxed max-w-xl">
-                {t('kycPage.pendingBody') ||
-                  'Your documents are under review. You can continue browsing and using your consumer account while verification is pending.'}
+                Your documents are under review. You can continue browsing and using your consumer account while verification is pending.
               </p>
               <span className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400 group-hover:underline">
                 View status & audit progress
@@ -116,7 +114,7 @@ export default function ProfileKycCard({ variant = 'mobile' }: { variant?: 'mobi
               <p className="font-semibold text-foreground tracking-tight">
                 Identity verification
               </p>
-              <Badge variant="destructive" className="text-[11px] font-medium">
+              <Badge variant="outline" className="text-[11px] font-medium">
                 Verify when needed
               </Badge>
             </div>
