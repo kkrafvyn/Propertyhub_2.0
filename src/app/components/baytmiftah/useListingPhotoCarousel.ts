@@ -9,7 +9,7 @@ export function getListingPhotos(listing: { photos?: string[]; image?: string })
   return [];
 }
 
-export function useListingPhotoCarousel(photos: string[], intervalMs = LISTING_PHOTO_INTERVAL_MS) {
+export function useListingPhotoCarousel(photos: string[], intervalMs = LISTING_PHOTO_INTERVAL_MS, paused = false) {
   const [index, setIndex] = useState(0);
   const photoKey = photos.join("|");
 
@@ -18,12 +18,12 @@ export function useListingPhotoCarousel(photos: string[], intervalMs = LISTING_P
   }, [photoKey]);
 
   useEffect(() => {
-    if (photos.length <= 1) return undefined;
+    if (paused || photos.length <= 1 || (typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) return undefined;
     const timer = window.setInterval(() => {
       setIndex((current) => (current + 1) % photos.length);
     }, intervalMs);
     return () => window.clearInterval(timer);
-  }, [photoKey, photos.length, intervalMs]);
+  }, [photoKey, photos.length, intervalMs, paused]);
 
   return [index, setIndex] as const;
 }
