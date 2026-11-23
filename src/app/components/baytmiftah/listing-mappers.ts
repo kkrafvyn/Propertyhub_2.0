@@ -2,6 +2,7 @@ import { getPropertyImageGallery } from "../../../lib/property-media";
 import { formatMoneyMajor } from "../../../lib/currency-format";
 import { buildPropertyComplianceSnapshot } from "../../../lib/property-country-context.service";
 import { GHANA_CITY_COORDS } from "../../../lib/ghana-regions";
+import { normalizeMatterportTourUrl } from "../../../lib/virtual-tour";
 
 export interface MarketplaceListingCard {
   id: string;
@@ -14,6 +15,7 @@ export interface MarketplaceListingCard {
   photos: string[];
   featured?: boolean;
   verified?: boolean;
+  has3DTour?: boolean;
   type?: string;
   marketLabel?: string;
   currency?: string;
@@ -97,6 +99,7 @@ export function mapListingToCard(listing: any): MarketplaceListingCard {
       ? Number(listing.rating_avg).toFixed(1)
       : null,
     photos: getPropertyImageGallery(property),
+    has3DTour: Boolean(normalizeMatterportTourUrl(property.virtual_tour_url)),
     featured: (listing.quality_score || 0) >= 75,
     verified: listing.organization?.verified,
     type: property.category,
