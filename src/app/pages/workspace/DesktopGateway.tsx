@@ -20,7 +20,6 @@ import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 export function DesktopGateway() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  // ?force=1 may open a page, but must never override authorization or plan checks.
   const downloadUrl = useMemo(() => getDesktopDownloadUrl(), []);
   const [eligibility, setEligibility] = useState<DesktopEligibilityResult | null>(null);
   const [eligibilityLoading, setEligibilityLoading] = useState(true);
@@ -192,9 +191,6 @@ export function DesktopGateway() {
             <MonitorSmartphone className="mr-2 h-4 w-4" />
             Continue on Web
           </Button>
-          {forceGateway ? (
-            <p className="text-xs text-white/40">Preview mode: gateway forced via ?force=1</p>
-          ) : null}
         </div>
       </div>
     </div>
