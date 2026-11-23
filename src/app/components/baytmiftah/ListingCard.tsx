@@ -62,6 +62,10 @@ export function ListingCard({
           </span>
         )}
 
+        {listing.has3DTour ? (
+          <span className="absolute right-3 bottom-14 rounded-full border border-white/20 bg-primary/90 px-2.5 py-1 text-[11px] font-semibold text-primary-foreground">3D tour</span>
+        ) : null}
+
         {listing.marketLabel ? (
           <span className="absolute left-3 bottom-14 max-w-[85%] truncate rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-semibold text-white border border-white/15 shadow-xs">
             {listing.marketLabel}
