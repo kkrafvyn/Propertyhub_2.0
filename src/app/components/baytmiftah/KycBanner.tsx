@@ -6,7 +6,10 @@ import { isKycPending, isKycVerified } from '../../lib/baytmiftah/kyc';
 import { CONSUMER_ROUTES } from '../../lib/consumer-routes';
 import { Button } from '../ui/Button';
 
-export default function KycBanner({ kyc }: { kyc?: any }) {
+export default function KycBanner({ kyc, mode = 'transaction' }: {
+  kyc?: any;
+  mode?: 'reminder' | 'transaction';
+}) {
   const { t } = useTranslation();
   const [dismissed, setDismissed] = useState(false);
 
@@ -42,7 +45,9 @@ export default function KycBanner({ kyc }: { kyc?: any }) {
               <p className="font-semibold text-sm sm:text-base tracking-tight text-foreground">
                 {pending
                   ? t('kycPage.pendingTitle') || 'Identity Verification Under Review'
-                  : t('kycPage.requiredTitle') || 'Complete Your Identity Verification'}
+                  : mode === 'reminder'
+                    ? 'Verify your identity when you are ready'
+                    : 'Identity verification for this step'}
               </p>
               <span
                 className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wider ${
@@ -51,20 +56,20 @@ export default function KycBanner({ kyc }: { kyc?: any }) {
                     : 'bg-primary/20 text-primary'
                 }`}
               >
-                {pending ? 'In Progress' : 'Required'}
+                {pending ? 'In Progress' : mode === 'reminder' ? 'Later' : 'Action needed'}
               </span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground leading-relaxed max-w-2xl">
               {pending
-                ? t('kycPage.pendingBody') ||
-                  'Your government ID and biometric check are being screened. You can track progress and status in real-time.'
-                : t('kycPage.requiredBody') ||
-                  'Verified identities unlock legal digital lease signing, formal purchase offers, and secured escrow operations.'}
+                ? 'Your identity verification is under review. You can continue using the marketplace while it is being checked.'
+                : mode === 'reminder'
+                  ? 'You can browse, save, enquire and message without KYC. Verify later when you reach a booking, formal offer, lease signing or another transaction that requires it.'
+                  : 'You can continue browsing and enquiring. Verification is needed to complete this regulated booking, offer or agreement.'}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <Link to={CONSUMER_ROUTES.kyc}>
                 <Button size="sm" variant={pending ? 'outline' : 'default'} className="gap-1.5 text-xs font-semibold">
-                  {pending ? 'View Verification Progress' : t('kycPage.startVerification') || 'Start Identity Verification'}
+                  {pending ? 'View Verification Progress' : mode === 'reminder' ? 'Verify identity' : 'Start identity verification'}
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Button>
               </Link>
