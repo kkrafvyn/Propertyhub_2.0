@@ -30,7 +30,7 @@ export function getUserRole(
   return (
     profile?.role ||
     getMetadataRole(user.app_metadata) ||
-    getMetadataRole(user.user_metadata) ||
+    // User metadata is mutable by the account owner, not a trusted role grant.
     USER_ROLES.CONSUMER
   );
 }
