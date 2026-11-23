@@ -46,7 +46,7 @@ export default function ProfileKycCard({ variant = 'mobile' }: { variant?: 'mobi
               </div>
               <p className="mt-1 text-xs text-muted-foreground leading-relaxed max-w-xl">
                 {t('kycPage.verifiedBody') ||
-                  'Your government identity was authenticated. Unrestricted access to offers, escrow, and verified leases.'}
+                  'Your identity verification is complete. Transaction-specific eligibility and other safeguards may still apply.'}
               </p>
             </div>
           </div>
@@ -86,7 +86,7 @@ export default function ProfileKycCard({ variant = 'mobile' }: { variant?: 'mobi
               </div>
               <p className="mt-1 text-xs text-muted-foreground leading-relaxed max-w-xl">
                 {t('kycPage.pendingBody') ||
-                  'Your documents are undergoing automated screening & compliance review. Typically approved in < 2 hours.'}
+                  'Your documents are under review. You can continue browsing and using your consumer account while verification is pending.'}
               </p>
               <span className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400 group-hover:underline">
                 View status & audit progress
@@ -114,15 +114,14 @@ export default function ProfileKycCard({ variant = 'mobile' }: { variant?: 'mobi
           <div>
             <div className="flex items-center gap-2">
               <p className="font-semibold text-foreground tracking-tight">
-                {t('profile.kycRequired') || 'Identity Verification Required'}
+                Identity verification
               </p>
               <Badge variant="destructive" className="text-[11px] font-medium">
-                Required for Offers
+                Verify when needed
               </Badge>
             </div>
             <p className="mt-1 text-xs text-muted-foreground leading-relaxed max-w-xl">
-              {t('profile.kycRequiredDesc') ||
-                'Verify your government identity and selfie to unlock instant bookings, lease signatures, and verified buyer status.'}
+              You can browse, save properties, request information and message without KYC. Complete identity verification later when a regulated booking, formal offer or signed agreement requires it.
             </p>
             <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary group-hover:underline">
               {t('kycPage.startVerification') || 'Start Identity Verification'}
