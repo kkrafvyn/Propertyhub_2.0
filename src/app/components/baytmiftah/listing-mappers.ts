@@ -1,7 +1,6 @@
 import { getPropertyImageGallery } from "../../../lib/property-media";
 import { formatMoneyMajor } from "../../../lib/currency-format";
 import { buildPropertyComplianceSnapshot } from "../../../lib/property-country-context.service";
-import { GHANA_CITY_COORDS } from "../../../lib/ghana-regions";
 import { normalizeMatterportTourUrl } from "../../../lib/virtual-tour";
 
 export interface MarketplaceListingCard {
@@ -25,25 +24,7 @@ export interface MapListing extends MarketplaceListingCard {
   lat?: number | null;
   lng?: number | null;
   distanceLabel?: string;
-}
-
-const CITY_COORDS: Record<string, [number, number]> = {
-  ...GHANA_CITY_COORDS,
-  accra: [5.6037, -0.187],
-  tema: [5.6698, -0.0167],
-  kumasi: [6.6885, -1.6244],
-  takoradi: [4.8845, -1.7554],
-  cape: [5.1053, -1.2466],
-  tamale: [9.4034, -0.8424],
-  lagos: [6.5244, 3.3792],
-  abuja: [9.0765, 7.3986],
-  nairobi: [-1.2921, 36.8219],
-};
-
-function hashJitter(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i += 1) hash = (hash + id.charCodeAt(i) * (i + 1)) % 1000;
-  return [(hash % 100) / 5000 - 0.01, ((hash / 100) % 100) / 5000 - 0.01] as const;
+  locationNote?: string;
 }
 
 function formatPriceLabel(listing: {
@@ -117,19 +98,16 @@ export function mapListingToMapListing(listing: any): MapListing {
       ...card,
       lat: latitude,
       lng: longitude,
+      locationNote: "Location supplied by advertiser. Confirm before travelling.",
     };
   }
 
-  const cityKey = String(property.city || "accra")
-    .toLowerCase()
-    .split(",")[0]
-    .trim();
-  const base = CITY_COORDS[cityKey] || CITY_COORDS.accra;
-  const [dLat, dLng] = hashJitter(listing.id);
-
+  // A city-centre pin with ID-based random jitter would falsely imply the
+  // listing is located at a specific street address. Omit unmapped listings.
   return {
     ...card,
-    lat: base[0] + dLat,
-    lng: base[1] + dLng,
+    lat: null,
+    lng: null,
+    locationNote: "Address location not provided.",
   };
 }
