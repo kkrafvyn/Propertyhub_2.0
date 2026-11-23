@@ -940,6 +940,11 @@ export function PropertyDetail() {
               <ListingFreshness key={listing.id} listing={listing} />
               <DocumentChecklist />
               <PropertyCostSummary currency={paymentCurrency} price={listing.price} listingType={listing.listing_type} minimumDeposit={listing.minimum_deposit_amount} inspectionFee={listing.inspection_fee_amount} />
+              {normalizeMatterportTourUrl(property.virtual_tour_url) ? (
+                <a href="#property-3d-tour" className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary">
+                  Explore the interactive 3D walkthrough
+                </a>
+              ) : null}
 
               {/* Luxury Spec Tiles */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 py-6 border-y border-surface-border my-6">
