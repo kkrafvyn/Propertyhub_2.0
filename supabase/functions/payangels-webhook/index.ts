@@ -46,8 +46,8 @@ Deno.serve(async (req) => {
     };
     const referenceHint = event.data?.reference?.trim() || event.data?.transaction_reference?.trim() || null;
     // Preserve event ID naming from the original provider handler.
-    const eventId = event.data?.id != null
-      ? String(event.data.id)
+    const eventId = event.data?.id != null && event.event
+      ? `${event.event}:${String(event.data.id)}`
       : referenceHint && event.event ? `${event.event}:${referenceHint}` : null;
     if (!eventId) throw new HttpError(400, "Webhook payload is missing an event identifier");
 
