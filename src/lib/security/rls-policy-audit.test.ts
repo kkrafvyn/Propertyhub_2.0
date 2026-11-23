@@ -311,6 +311,9 @@ const INTENTIONAL_ZERO_POLICY_TABLES = new Set([
   'public.legal_policy_bundles',
   'public.nearby_services',
   'public.organization_webhook_secrets',
+  // Service-role-only PayAngels delivery leases; all authenticated/anon reads
+  // are denied and the only access is through restricted SECURITY DEFINER RPCs.
+  'public.payangels_webhook_processing',
   'public.property_inspections',
   'public.rate_limit_buckets',
   'public.recommendation_logs',
