@@ -172,7 +172,7 @@
     "contracts:test": "npm run test --prefix blockchain",
     "contracts:verify": "npm run verify --prefix blockchain",
     "desktop:pack:win:signed": "npm run desktop:icons && npm run build:desktop && electron-builder --win --x64 --publish never --config.win.signAndEditExecutable=true --config.forceCodeSigning=true",
-    "test:sql:upgrades": "node scripts/security/test-owner-access.mjs && node scripts/security/test-workspace-chat.mjs && node scripts/security/test-owner-digests.mjs && node scripts/security/test-public-search-and-dm-abuse.mjs",
+    "test:sql:upgrades": "node scripts/security/test-owner-access.mjs && node scripts/security/test-workspace-chat.mjs && node scripts/security/test-owner-digests.mjs && node scripts/security/test-public-search-and-dm-abuse.mjs && node scripts/security/test-payangels-webhook-lifecycle.mjs",
     "test:e2e:marketing": "npm run build:marketing && playwright test --config playwright.marketing.config.ts"
   },
   "dependencies": {
