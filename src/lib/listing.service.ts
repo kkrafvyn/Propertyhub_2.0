@@ -216,6 +216,7 @@ export const listingService = {
         location: property?.city || property?.neighborhood || undefined,
         listingType: listing.listing_type,
         propertyType: property?.category || undefined,
+        currency: listing.currency || undefined,
         priceMin: price > 0 ? Math.floor(price * 0.75) : undefined,
         priceMax: price > 0 ? Math.ceil(price * 1.25) : undefined,
         bedrooms: property?.bedrooms || undefined,
