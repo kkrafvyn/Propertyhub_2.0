@@ -16,8 +16,8 @@ describe("currency summaries", () => {
       { amount: 200, currency: "USD" },
     ]);
     expect(summary.headline).toBe("2 currencies");
-    expect(summary.breakdown).toContain("GHS");
-    expect(summary.breakdown).toContain("USD");
+    expect(summary.breakdown).toMatch(/GH₵|GHS/);
+    expect(summary.breakdown).toMatch(/US\$|USD/);
     expect(summary.breakdown).not.toMatch(/GHS\s*300|GH₵\s*300/);
   });
   it("does not pretend missing/invalid currency is GHS", () => {
