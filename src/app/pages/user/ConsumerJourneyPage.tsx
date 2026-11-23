@@ -10,7 +10,6 @@ import {
   PageLayout,
   SectionHeader,
 } from "../../components/ux";
-import KycBanner from "../../components/baytmiftah/KycBanner";
 import { PropertyContextCard } from "../../components/messaging/ContextCards";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { dealCaseService } from "../../../lib/dealcase.service";
@@ -37,7 +36,7 @@ export function ConsumerJourneyPage() {
   const [searchParams] = useSearchParams();
   const bookingId = searchParams.get("bookingId");
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { t } = useTranslation();
   const [dealCase, setDealCase] = useState<any | null>(null);
   const [booking, setBooking] = useState<any | null>(null);
@@ -200,9 +199,6 @@ export function ConsumerJourneyPage() {
         emptyActionHref={pageConfig.emptyActionHref}
       >
         <div className="space-y-6">
-          {(booking || paymentAction) && profile ? (
-            <KycBanner kyc={profile} />
-          ) : null}
           {listingMeta ? (
             <div className="max-w-md">
               <PropertyContextCard
