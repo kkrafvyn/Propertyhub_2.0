@@ -282,7 +282,7 @@ function MarketingFooter({ darkChrome }: { darkChrome: boolean }) {
               <a href="/#workflow">Workflow</a>
             </li>
             <li>
-              <a href="/#features">Modules</a>
+              <a href="/#platform">Platform</a>
             </li>
             <li>
               <a href="/#ai">AI</a>

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 
 async function open(page: import('@playwright/test').Page) {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Your property life. Your property business.', { timeout: 30000 });
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(`${DEFAULT_MARKETING_DOCUMENT.hero.title} ${DEFAULT_MARKETING_DOCUMENT.hero.secondLine}`, { timeout: 30000 });
 }
 
 const activeHeroSrc = (page: import('@playwright/test').Page) =>
@@ -20,9 +20,9 @@ for (const width of [1440, 768, 390]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await expect(page.locator('canvas')).toHaveCount(0);
     const hero = page.locator('.mk-photo-hero');
-    await expect(hero.getByRole('link', { name: 'Get Started' })).toHaveAttribute('href', /\/signup$/);
+    await expect(hero.getByRole('link', { name: 'Create workspace', exact: true })).toHaveAttribute('href', /\/signup$/);
     await expect(hero.getByRole('link', { name: 'Explore Properties' })).toHaveAttribute('href', /\/search$/);
-    await expect(hero.getByRole('link', { name: 'Product tour' })).toHaveAttribute('href', '#product-tour');
+    await expect(hero.getByRole('link', { name: 'Take a look inside', exact: true })).toHaveAttribute('href', '#product-tour');
     await expect(page.locator('header .mk-nav-login')).toHaveAttribute('href', /\/login$/);
     await expect(hero.locator('.mk-photo-controls')).toHaveCount(0);
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -39,7 +39,7 @@ for (const width of [1440, 768, 390]) {
       await expect(page.locator('#teams')).toBeInViewport();
     }
     await page.screenshot({ path: `test-results/marketing-${width}.png` });
-    await hero.getByRole('link', { name: 'Product tour' }).click();
+    await hero.getByRole('link', { name: 'Take a look inside', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Product tour', exact: true })).toBeInViewport();
     await page.getByRole('tab', { name: 'Payments', exact: true }).click();
     await expect(page.locator('#tour-panel-payments')).toBeVisible();
@@ -61,9 +61,9 @@ test('keyboard focus and automatic rotation with reduced motion', async ({ page 
   await page.clock.install();
   await open(page);
   await expect(page.locator('.mk-photo-hero img')).toHaveCount(8);
-  await page.getByRole('link', { name: 'Get Started' }).focus();
+  await page.getByRole('link', { name: 'Create workspace', exact: true }).focus();
   const focus = await page.locator(':focus').evaluate((el) => getComputedStyle(el).outlineColor);
-  expect(focus).toBe('rgb(240, 161, 139)');
+  expect(focus).toBe('rgb(227, 205, 163)');
   await page.locator('header').click();
   await page.clock.fastForward(7000);
   const afterRotate = await activeHeroSrc(page);
@@ -87,7 +87,7 @@ test('slow and failed photos preserve readable content and recover', async ({ pa
   await open(page);
   await expect(page.locator('.mk-photo-hero img')).toHaveCount(1);
   await expect(page.locator('.mk-photo-hero h1')).toBeVisible();
-  await expect(page.locator('.mk-photo-hero').getByRole('link', { name: 'Get Started' })).toBeVisible();
+  await expect(page.locator('.mk-photo-hero').getByRole('link', { name: 'Create workspace', exact: true })).toBeVisible();
   release();
   await expect.poll(() => activeHeroSrc(page), { timeout: 15000 }).toContain('interior');
 });
@@ -112,7 +112,7 @@ test('published marketing content replaces defaults while preserving the product
   await expect(page.locator('.mk-photo-hero img').first()).toHaveAttribute('src', /interior-1280.webp$/);
   await expect(page.getByRole('heading', { name: 'A simpler operating day' })).toBeAttached();
   await expect(page.locator('.mk-ed-details')).toHaveCount(1);
-  await expect(page.locator('.mk-photo-hero').getByRole('link', { name: 'Get Started' })).toHaveAttribute('href', /\/signup$/);
-  await page.locator('.mk-photo-hero').getByRole('link', { name: 'Product tour' }).click();
+  await expect(page.locator('.mk-photo-hero').getByRole('link', { name: 'Create workspace', exact: true })).toHaveAttribute('href', /\/signup$/);
+  await page.locator('.mk-photo-hero').getByRole('link', { name: 'Take a look inside', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Product tour', exact: true })).toBeInViewport();
 });

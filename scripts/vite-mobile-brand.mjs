@@ -6,16 +6,16 @@ const BRANDS = {
   consumer: {
     appName: 'BaytMiftah',
     manifest: '/manifest.webmanifest',
-    themeColor: '#0F2922',
-    themeLight: '#fcfbf9',
-    themeDark: '#081713',
+    themeColor: '#123C32',
+    themeLight: '#F6F3EB',
+    themeDark: '#0d1712',
   },
   business: {
     appName: 'BaytMiftah Workspace',
     manifest: '/manifest.workspace.webmanifest',
-    themeColor: '#0B2545',
-    themeLight: '#0B2545',
-    themeDark: '#071528',
+    themeColor: '#123C32',
+    themeLight: '#123C32',
+    themeDark: '#0d1712',
   },
 };
 
@@ -43,7 +43,7 @@ export function mobileBrandPlugin() {
           `<meta name="apple-mobile-web-app-title" content="${brand.appName}" />`,
         )
         .replace(/href="\/manifest\.webmanifest"/, `href="${brand.manifest}"`)
-        .replace(/href="\/favicon\.svg"/, brand === BRANDS.business ? 'href="/brand/app-icon-workspace.svg"' : 'href="/favicon.svg"')
+        .replace(/href="\/favicon\.svg(\?[^\"]*)?"/, (_, version = '') => `href="${brand === BRANDS.business ? '/brand/app-icon-workspace.svg' : '/favicon.svg'}${version}"`)
         .replace(/href="\/icons\//g, brand === BRANDS.business ? 'href="/icons/workspace/' : 'href="/icons/')
         .replace(/<title>[^<]*<\/title>/, `<title>${brand.appName}</title>`);
 

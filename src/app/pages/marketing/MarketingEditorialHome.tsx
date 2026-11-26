@@ -8,14 +8,13 @@ import { EditorialRolesSection, EditorialResidentSection, EditorialIntegrationsS
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { EditorialHero } from "../../components/marketing/editorial/EditorialHero";
 import { EditorialProductTour } from "../../components/marketing/editorial/EditorialProductTour";
-import { MarketingBackgroundCarousel } from "../../components/marketing/MarketingBackgroundCarousel";
+import "../../components/marketing/editorial/marketing-showcase.css";
 import {
   EditorialAiSection,
   EditorialFaqSection,
   EditorialFinalCtaSection,
   EditorialGettingStartedSection,
   EditorialOutcomeSection,
-  EditorialPortfolioSection,
   EditorialSalesSection,
   EditorialTrustSection,
   EditorialWorkflowSection,
@@ -28,42 +27,16 @@ function heroOgImage(document: MarketingPageDocument) {
   return `/marketing/hero/${first}-2200.webp`;
 }
 
-function MarketingHeroSkeleton() {
-  return (
-    <MarketingBackgroundCarousel imageIds={DEFAULT_MARKETING_DOCUMENT.hero.images}>
-      <div className="mk-ed-container">
-        <div className="mk-ed-hero__copy mk-ed-hero__copy--loading" aria-busy="true" aria-label="Loading homepage">
-          <div className="mk-ed-hero-skeleton__line mk-ed-hero-skeleton__line--kicker" />
-          <div className="mk-ed-hero-skeleton__line mk-ed-hero-skeleton__line--title" />
-          <div className="mk-ed-hero-skeleton__line mk-ed-hero-skeleton__line--title-short" />
-          <div className="mk-ed-hero-skeleton__line mk-ed-hero-skeleton__line--lead" />
-          <div className="mk-ed-hero-skeleton__actions">
-            <div className="mk-ed-hero-skeleton__pill" />
-            <div className="mk-ed-hero-skeleton__pill mk-ed-hero-skeleton__pill--ghost" />
-          </div>
-        </div>
-      </div>
-    </MarketingBackgroundCarousel>
-  );
-}
-
-/** Public marketing homepage — editorial layout (replaces scroll-cinematic composition). */
 export function MarketingEditorialHome({ document: suppliedDocument, preview = false }: { document?: MarketingPageDocument; preview?: boolean } = {}) {
-  const [published, setPublished] = useState<MarketingPageDocument | null>(() => {
+  const [published, setPublished] = useState<MarketingPageDocument>(() => {
     if (suppliedDocument) return suppliedDocument;
     if (preview) return DEFAULT_MARKETING_DOCUMENT;
-    return readMarketingHomeCache();
+    return readMarketingHomeCache() ?? DEFAULT_MARKETING_DOCUMENT;
   });
 
   useEffect(() => {
     if (suppliedDocument || preview) return;
     let active = true;
-    const fallbackTimer = window.setTimeout(() => {
-      if (active) {
-        setPublished((current) => current ?? DEFAULT_MARKETING_DOCUMENT);
-      }
-    }, 4000);
-
     void marketingContentService
       .loadPublished()
       .then((value) => {
@@ -73,41 +46,14 @@ export function MarketingEditorialHome({ document: suppliedDocument, preview = f
         }
       })
       .catch(() => {
-        if (active) setPublished(DEFAULT_MARKETING_DOCUMENT);
-      })
-      .finally(() => {
-        window.clearTimeout(fallbackTimer);
+        // Keep the cached or default page available if the refresh fails.
       });
     return () => {
       active = false;
-      window.clearTimeout(fallbackTimer);
     };
   }, [suppliedDocument, preview]);
 
-  const loadingPublic = !suppliedDocument && !preview && published === null;
-  const content = published ?? DEFAULT_MARKETING_DOCUMENT;
-
-  if (loadingPublic) {
-    return (
-      <>
-        <PageMeta
-          title={DEFAULT_MARKETING_DOCUMENT.seo.title}
-          description={DEFAULT_MARKETING_DOCUMENT.seo.description}
-          canonicalPath="/"
-          ogTitle={DEFAULT_MARKETING_DOCUMENT.seo.title}
-          ogDescription={DEFAULT_MARKETING_DOCUMENT.seo.description}
-          ogImage={heroOgImage(DEFAULT_MARKETING_DOCUMENT)}
-          ogImageWidth={2200}
-          ogImageHeight={1375}
-          themeColor="#0d1913"
-        />
-        <MarketingStructuredData document={DEFAULT_MARKETING_DOCUMENT} />
-        <div id="mk-main-content" className="mk-ed-page mk-ed-page--carousel" tabIndex={-1}>
-          <MarketingHeroSkeleton />
-        </div>
-      </>
-    );
-  }
+  const content = suppliedDocument ?? published;
 
   return (
     <MarketingContentProvider document={content}>
@@ -125,16 +71,15 @@ export function MarketingEditorialHome({ document: suppliedDocument, preview = f
         />
       )}
       {!preview && <MarketingStructuredData document={content} />}
-      <div id="mk-main-content" className="mk-ed-page mk-ed-page--carousel" tabIndex={-1}>
+      <div id="mk-main-content" className="mk-ed-page mk-ed-page--showcase" tabIndex={-1}>
         <EditorialHero />
         <EditorialOutcomeSection />
         <EditorialPlatformSection />
         <EditorialProductTour />
-        <EditorialAppPreviewSection />
         <EditorialWorkflowSection />
         <EditorialRolesSection />
         <EditorialResidentSection />
-        <EditorialPortfolioSection />
+        <EditorialAppPreviewSection />
         <EditorialAiSection />
         <EditorialGettingStartedSection />
         <EditorialIntegrationsSection />

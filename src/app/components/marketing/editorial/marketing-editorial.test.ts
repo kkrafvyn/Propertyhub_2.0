@@ -14,7 +14,6 @@ describe("marketing editorial homepage data", () => {
     expect(hrefs).toContain("#product-tour");
     expect(hrefs).toContain("#platform");
     expect(hrefs).toContain("#workflow");
-    expect(hrefs).toContain("#features");
     expect(hrefs).toContain("#trust");
     expect(hrefs).toContain("#pricing");
   });

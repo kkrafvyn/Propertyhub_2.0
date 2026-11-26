@@ -7,7 +7,8 @@ import { PLATFORM_CONSOLE_GRANTS } from './platform-console-grants';
 describe('marketing content and app management permissions', () => {
   it('keeps defaults valid and returns an independent copy', () => {
     const document=validateMarketingDocument(DEFAULT_MARKETING_DOCUMENT);
-    document.hero.title='Changed'; expect(DEFAULT_MARKETING_DOCUMENT.hero.title).toBe('Your property life.');
+    const originalTitle = DEFAULT_MARKETING_DOCUMENT.hero.title;
+    document.hero.title='Changed'; expect(DEFAULT_MARKETING_DOCUMENT.hero.title).toBe(originalTitle);
   });
   it('exports homepage-default.json when EXPORT_MARKETING_CMS=1', () => {
     if (process.env.EXPORT_MARKETING_CMS !== '1') return;

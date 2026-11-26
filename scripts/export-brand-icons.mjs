@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import pngToIco from 'png-to-ico';
 import sharp from 'sharp';
 const mark = '<circle cx="256" cy="198" r="42" fill="white"/><path d="M48 326Q256 208 464 326Q256 253 48 326Z" fill="white"/>';
-for (const [variant, android, color] of [['consumer','android','#0F2922'],['workspace','android-business','#0B2545']]) {
+for (const [variant, android, color] of [['consumer','android','#123C32'],['workspace','android-business','#123C32']]) {
   const source = `public/brand/${variant === 'consumer' ? 'app-icon' : 'app-icon-workspace'}.svg`;
   const opaque = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="${color}"/>${mark}</svg>`;
   const folder = variant === 'consumer' ? 'public/icons' : 'public/icons/workspace';
@@ -12,6 +12,7 @@ for (const [variant, android, color] of [['consumer','android','#0F2922'],['work
     await sharp(Buffer.from(opaque)).resize(size,size).png().toFile(`${folder}/${name}.png`);
   }
   if (variant === 'consumer') {
+    await fs.copyFile(source, 'public/favicon.svg');
     const ico = await pngToIco([`${folder}/favicon-32.png`, `${folder}/favicon-48.png`]);
     await fs.writeFile('public/favicon.ico', ico);
   }

@@ -50,15 +50,15 @@ export type { MarketingPageExtras } from './marketing-editorial-static';
 const DEFAULT_PROOF_OUTCOMES: MarketingOutcome[] = [
   {
     title: 'One connected record',
-    detail: 'Property, unit, lease, collection, document, and work-order context stay linked across consumer and workspace surfaces.',
+    detail: 'Keep properties, people, leases, and payments together.',
   },
   {
-    title: 'Eight surfaces, one OS',
-    detail: 'Consumer and workspace on web and mobile — plus admin and desktop workspace — share auth, org data, and operational history.',
+    title: 'At your desk. On the move.',
+    detail: 'A connected experience for your browser, phone, and property team.',
   },
   {
-    title: 'Work that moves visibly',
-    detail: 'Enquiries, applications, maintenance, and approvals progress through trackable stages instead of scattered follow-ups.',
+    title: 'Know what happens next',
+    detail: 'Follow enquiries, applications, and maintenance from start to finish.',
   },
 ];
 
@@ -94,16 +94,16 @@ export const DEFAULT_MARKETING_INTROS: MarketingIntros = {
     lead: 'Plan fit depends on portfolio size, enabled modules, and rollout support. Fees and regional availability are confirmed during onboarding.',
   },
   faqTitle: 'Practical questions',
-  proofNote: 'One Real Estate Operating System for Ghana-first operations — with international rules where your workspace enables them.',
+  proofNote: 'Built around the way property works in Ghana.',
 };
 
 export const DEFAULT_MARKETING_DOCUMENT: MarketingPageDocument = {
   hero: {
-    eyebrow: 'Real Estate Operating System',
-    title: 'Your property life.',
-    secondLine: 'Your property business.',
+    eyebrow: 'Property, connected',
+    title: 'Find your place.',
+    secondLine: 'Run it beautifully.',
     description:
-      'Connect people who rent, buy, or book stays with professionals who list, lease, collect, and maintain — without juggling five different apps. Built for Ghana with cedis, SMS, and WhatsApp norms; international rules where your workspace enables them.',
+      'Find a home, book a stay, or run your portfolio. Bring your next move and your daily property operations together with BaytMiftah.',
     images: [...MARKETING_IMAGE_IDS],
   },
   seo: {

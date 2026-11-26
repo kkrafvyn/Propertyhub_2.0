@@ -180,11 +180,11 @@ export const DEFAULT_INTEGRATION_ITEMS: MarketingIntegrationItem[] = [
 ];
 
 export const DEFAULT_MARKETING_EXTRAS: MarketingPageExtras = {
-  heroHighlights: ['Ghana-first REOS', 'Cedis & mobile money', 'SMS & WhatsApp', '103 workspace modules'],
+  heroHighlights: ['Homes & stays', 'Landlords & property teams', 'Built for Ghana'],
   platform: {
-    kicker: 'Architecture',
-    title: 'Eight surfaces. One operating system.',
-    lead: 'Consumer and workspace products share auth, org data, and operational history — from marketplace discovery through lease, collections, and maintenance.',
+    kicker: 'Made for your side of property',
+    title: 'Your next home. Your growing business.',
+    lead: 'Whether you are finding a place or looking after one, there is a simpler way to move forward.',
     surfaces: DEFAULT_PLATFORM_SURFACES.map((surface) => ({ ...surface })),
   },
   teams: {

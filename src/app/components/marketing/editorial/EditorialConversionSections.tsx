@@ -64,17 +64,16 @@ export function EditorialAppPreviewSection() {
     <section id="app-previews" ref={ref} className="mk-ed-section mk-ed-reveal" aria-labelledby="app-previews-heading">
       <div className="mk-ed-container">
         <p className="mk-ed-kicker">In-app experience</p>
-        <h2 id="app-previews-heading" className="mk-ed-heading">See the product in motion</h2>
-        <p className="mk-ed-lead">Screen recordings from the consumer and workspace apps using demo portfolio data.</p>
+        <h2 id="app-previews-heading" className="mk-ed-heading">Made to move with you.</h2>
+        <p className="mk-ed-lead">Explore and manage property from your phone. Watch the apps with sample portfolio data.</p>
         <div className="mk-ed-app-preview-grid">
           {appPreviews.showConsumer ? (
             <figure className="mk-ed-app-preview">
               <video
                 muted
                 playsInline
-                loop
-                autoPlay
-                preload="metadata"
+                controls
+                preload="none"
                 poster={appPreviews.consumerPosterSrc}
                 aria-label="BaytMiftah consumer app preview"
                 onPlay={() => trackMarketingEvent('marketing_app_preview_play', { variant: 'consumer' })}
@@ -89,9 +88,8 @@ export function EditorialAppPreviewSection() {
               <video
                 muted
                 playsInline
-                loop
-                autoPlay
-                preload="metadata"
+                controls
+                preload="none"
                 poster={appPreviews.workspacePosterSrc}
                 aria-label="BaytMiftah workspace app preview"
                 onPlay={() => trackMarketingEvent('marketing_app_preview_play', { variant: 'workspace' })}
