@@ -57,7 +57,7 @@ jobs:
         if: steps.dast_config.outputs.configured == 'true'
         id: zap_anonymous
         continue-on-error: true
-        uses: zaproxy/action-baseline@7c4deb10e6261301961c86d65d54a516394f9aed
+        uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25
         with:
           target: ${{ vars.DAST_TARGET_URL || secrets.DAST_TARGET_URL }}
           cmd_options: "-a -j"
@@ -90,7 +90,7 @@ jobs:
         if: steps.dast_config.outputs.configured == 'true' && steps.dast_auth.outputs.available == 'true'
         id: zap_authenticated
         continue-on-error: true
-        uses: zaproxy/action-baseline@7c4deb10e6261301961c86d65d54a516394f9aed
+        uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25
         with:
           target: ${{ vars.DAST_TARGET_URL || secrets.DAST_TARGET_URL }}
           cmd_options: "-a -j -z \"${{ steps.dast_auth.outputs.zap_options }}\""
