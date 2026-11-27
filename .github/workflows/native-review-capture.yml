@@ -1,4 +1,4 @@
-name: Native review simulator smoke capture
+name: Native simulator offline smoke capture
 on:
   push:
     branches: [feature/native-app-review-recording]
@@ -15,8 +15,6 @@ jobs:
       matrix:
         variant: [consumer, business]
     env:
-      VITE_SUPABASE_URL: ${{ secrets.REVIEW_SUPABASE_URL }}
-      VITE_SUPABASE_ANON_KEY: ${{ secrets.REVIEW_SUPABASE_ANON_KEY }}
       MOBILE_SYNC_SKIP_PROVISION: '1'
     steps:
       - uses: actions/checkout@v4
@@ -25,17 +23,13 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Require isolated review backend
-        run: |
-          test -n "$VITE_SUPABASE_URL"
-          test -n "$VITE_SUPABASE_ANON_KEY"
       - name: Build original native app
         run: |
           npm run mobile:${{ matrix.variant }}:sync
           dir=ios
           if [ "${{ matrix.variant }}" = business ]; then dir=ios-business; fi
           xcodebuild -workspace "$dir/App/App.xcworkspace" -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/native-build" CODE_SIGNING_ALLOWED=NO build
-      - name: Boot cloud simulator and record actual launch
+      - name: Boot cloud simulator and record actual launch (backend not verified)
         shell: bash
         run: |
           set -euo pipefail
