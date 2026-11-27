@@ -1,0 +1,67 @@
+name: Native review simulator smoke capture
+on:
+  push:
+    branches: [feature/native-app-review-recording]
+    paths: ['.github/workflows/native-review-capture.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: macos-15
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [consumer, business]
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.REVIEW_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.REVIEW_SUPABASE_ANON_KEY }}
+      MOBILE_SYNC_SKIP_PROVISION: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Require isolated review backend
+        run: |
+          test -n "$VITE_SUPABASE_URL"
+          test -n "$VITE_SUPABASE_ANON_KEY"
+      - name: Build original native app
+        run: |
+          npm run mobile:${{ matrix.variant }}:sync
+          dir=ios
+          if [ "${{ matrix.variant }}" = business ]; then dir=ios-business; fi
+          xcodebuild -workspace "$dir/App/App.xcworkspace" -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/native-build" CODE_SIGNING_ALLOWED=NO build
+      - name: Boot cloud simulator and record actual launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p capture
+          udid=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; print(next(d["udid"] for ds in json.load(sys.stdin)["devices"].values() for d in ds if d["name"].startswith("iPhone") and "Pro Max" in d["name"]))')
+          xcrun simctl boot "$udid" || true
+          xcrun simctl bootstatus "$udid" -b
+          app=$(find "$RUNNER_TEMP/native-build/Build/Products/Debug-iphonesimulator" -maxdepth 1 -name '*.app' -print -quit)
+          test -n "$app"
+          bundle=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$app/Info.plist")
+          xcrun simctl install "$udid" "$app"
+          xcrun simctl status_bar "$udid" override --time '9:41' --batteryState unplugged --batteryLevel 100
+          xcrun simctl io "$udid" recordVideo --codec=h264 capture/native-launch.mp4 &
+          recorder=$!
+          trap 'kill -INT "$recorder" 2>/dev/null || true; wait "$recorder" || true' EXIT
+          sleep 2
+          xcrun simctl launch "$udid" "$bundle"
+          sleep 18
+          xcrun simctl io "$udid" screenshot capture/native-launch.png
+          kill -INT "$recorder"
+          wait "$recorder" || true
+          trap - EXIT
+          test -s capture/native-launch.mp4
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-smoke-${{ matrix.variant }}
+          path: capture/
+          retention-days: 7
