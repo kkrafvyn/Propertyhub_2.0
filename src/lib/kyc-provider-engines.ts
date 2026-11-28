@@ -1,9 +1,5 @@
 export const KYC_PROVIDER_ENGINES = [
   { slug: "internal-kyc", label: "Internal (AI + human review)" },
-  { slug: "smile-identity", label: "Smile Identity (Africa / Ghana Card)" },
-  { slug: "prembly", label: "Prembly (international / Ghana)" },
-  { slug: "ghana-trust", label: "Ghana Trust Center (legacy internal)" },
-  { slug: "transunion-smartmove", label: "TransUnion SmartMove (US tenant screening)" },
 ] as const;
 
 export type KycProviderEngineSlug = (typeof KYC_PROVIDER_ENGINES)[number]["slug"];

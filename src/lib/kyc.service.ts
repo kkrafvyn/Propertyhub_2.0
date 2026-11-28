@@ -184,13 +184,7 @@ export const kycService = {
     return data as { ok: boolean; submission?: KycSubmission };
   },
 
-  async runProviderVerification(submissionId: string, providerEngine: string) {
-    if (providerEngine === "prembly") {
-      return this.requestPremblyVerification(submissionId);
-    }
-    if (providerEngine === "smile-identity") {
-      return this.requestSmileVerification(submissionId);
-    }
+  async runProviderVerification(_submissionId: string, _providerEngine: string) {
     return null;
   },
 };
